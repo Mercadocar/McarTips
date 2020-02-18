@@ -1,0 +1,8 @@
+BFF
+    docker build --rm -f "MCar.Baby.Bff.Telepreco.API/dockerfile"  -t rodoflho/mcarbabybfftelepreco:latest .
+    docker push rodoflho/mcarbabybfftelepreco:latest
+    sudo docker pull rodoflho/mcarbabybfftelepreco:latest
+    sudo docker run -p 11001:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabybfftelepreco:latest
+    http://gitlab:11001/swagger/
+Sac
+    
