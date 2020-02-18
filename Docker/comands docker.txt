@@ -1,0 +1,46 @@
+﻿
+#Preparando dockerfile:
+vscode e visual studio tem ferramentas on-the-go
+Detalhes importantes:
+Como usamos nuget local, precisamos dizer ao dockerfile
+aonde buscar os pacotes, portanto, procure a seguinte linha
+numa aplicacao dotnetcore, por exemplo:
+
+COPY ["MCar.Authentication.API/NuGet.Config", "MCar.Authentication.API/"]
+RUN dotnet restore "MCar.Authentication.API/MCar.Authentication.API.csproj" --configfile MCar.Authentication.API/NuGet.Config
+
+Explicação:
+primeiro copiamos o nuget.config para a pasta destino
+e quando formos executar o restore, mostramos aonde este arquivo está.
+
+>> Para criar uma imagem
+#Estando dentro da pasta da solucao, no PowerShell
+docker build --rm -f "Mcar.Baby.Asterisk.API/dockerfile" -t rodoflho/mcarbabyasterisk:latest .
+
+>> Para listar todas as imagens
+docker image list
+
+>> Para rodar uma imagem docker
+docker run -p 8089:80 nomedoprojeto (onde a primeira porta é interna do docker e a segunda é a exposta para o host)
+aspnetcore
+sudo docker run -p 9021:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" -e "ASPNETCORE_URLS=http://+:80" rodoflho/mcarauthenticationapi:latest
+nodejs
+sudo docker run -p 11001:3000 -d --restart=always rodoflho/babypocfrontvue:latest
+Obs:
+-d -> detach. Roda o container, liberando o terminal.
+8089:80 -> primeira porta é aquela que acessamos de fora
+segunda porta é aquela que a aplicação dentro do container aceita requests
+
+>> Para publicar a imagem docker no docker hub
+logar no docker desktop
+docker login
+(tagear eh necessario antes de cada push, senão as changes nao serao vistas pelo dockerhub)
+docker tag nomedoprojeto eduardoconforti/nomedoprojeto:latest
+docker push eduardoconforti/nomedoprojeto:latest
+
+>> Para baixar uma imagem do docker hub (dentro do servidor
+docker pull rodoflho/mcarauthenticationapi:latest
+
+>> Para listar todos os containers
+docker ps -as
+sudo docker ps
