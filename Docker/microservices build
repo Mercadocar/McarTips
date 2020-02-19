@@ -5,4 +5,17 @@ BFF
     sudo docker run -p 11001:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabybfftelepreco:latest
     http://gitlab:11001/swagger/
 Sac
-    
+    docker build --rm -f "MCar.Baby.Microservice.Sac.API/dockerfile"  -t rodoflho/mcarbabymicroservicesac:latest .
+    docker push rodoflho/mcarbabymicroservicesac:latest
+    sudo docker pull rodoflho/mcarbabymicroservicesac:latest
+    sudo docker run -p 11005:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabymicroservicesac:latest
+Cliente
+    docker build --rm -f "MCar.Baby.Microservice.Cliente.API/dockerfile"  -t rodoflho/mcarbabymicroservicecliente:latest .
+    docker push rodoflho/mcarbabymicroservicecliente:latest
+    sudo docker pull rodoflho/mcarbabymicroservicecliente:latest
+    sudo docker run -p 11006:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabymicroservicecliente:latest
+Estoque
+    docker build --rm -f "MCar.Baby.Microservice.Cliente.API/dockerfile"  -t rodoflho/mcarbabymicroservicecliente:latest .
+    docker push rodoflho/mcarbabymicroservicecliente:latest
+    sudo docker pull rodoflho/mcarbabymicroservicecliente:latest
+    sudo docker run -p 11006:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabymicroservicecliente:latest
