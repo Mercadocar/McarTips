@@ -2,12 +2,22 @@
 ["docker login" antes de usar os comandos]
 [Estes comandos estao usando meu dockerhub rodoflho]
 
+FRONT
+    docker build --rm  -t rodoflho/babypocfrontvue:latest .
+    docker push rodoflho/babypocfrontvue:latest
+    sudo docker pull rodoflho/babypocfrontvue:latest
+    sudo docker run -p 11009:8080 -d --restart=always  rodoflho/babypocfrontvue:latest
 BFF
     docker build --rm -f "MCar.Baby.Bff.Telepreco.API/dockerfile"  -t rodoflho/mcarbabybfftelepreco:latest .
     docker push rodoflho/mcarbabybfftelepreco:latest
     sudo docker pull rodoflho/mcarbabybfftelepreco:latest
     sudo docker run -p 11001:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabybfftelepreco:latest
     http://gitlab:11001/swagger/
+BFF Asterisk
+    docker build --rm -f "MCar.Baby.Bff.Telepreco.Asterisk.Web/dockerfile"  -t rodoflho/mcarbabybffteleprecoasterisk:latest .
+    docker push rodoflho/mcarbabybffteleprecoasterisk:latest
+    sudo docker pull rodoflho/mcarbabybffteleprecoasterisk:latest
+    sudo docker run -p 11011:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabybffteleprecoasterisk:latest
 Sac
     docker build --rm -f "MCar.Baby.Microservice.Sac.API/dockerfile"  -t rodoflho/mcarbabymicroservicesac:latest .
     docker push rodoflho/mcarbabymicroservicesac:latest
@@ -33,8 +43,8 @@ Asterisk
     docker push rodoflho/mcarbabyasterisk:latest
     sudo docker pull rodoflho/mcarbabyasterisk:latest
     sudo docker run -p 11002:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabyasterisk:latest
-Pessoa?
-    docker build --rm -f "Mcar.Baby.Microservice.Produto.API/dockerfile"  -t rodoflho/mcarbabymicroserviceproduto:latest .
-    docker push rodoflho/mcarbabymicroserviceproduto:latest
-    sudo docker pull rodoflho/mcarbabymicroserviceproduto:latest
-    sudo docker run -p 11003:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabymicroserviceproduto:latest
+Pessoa
+    docker build --rm -f "MCar.Microservice.Pessoa.API/dockerfile"  -t rodoflho/mcarmicroservicepessoa:latest .
+    docker push rodoflho/mcarmicroservicepessoa:latest
+    sudo docker pull rodoflho/mcarmicroservicepessoa:latest
+    sudo docker run -p 11007:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarmicroservicepessoa:latest
