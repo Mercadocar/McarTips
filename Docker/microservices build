@@ -17,7 +17,7 @@ BFF Asterisk
     docker build --rm -f "MCar.Baby.Bff.Telepreco.Asterisk.Web/dockerfile"  -t rodoflho/mcarbabybffteleprecoasterisk:latest .
     docker push rodoflho/mcarbabybffteleprecoasterisk:latest
     sudo docker pull rodoflho/mcarbabybffteleprecoasterisk:latest
-    sudo docker run -p 11011:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabybffteleprecoasterisk:latest
+    sudo docker run -p 11020:5006 -p 11021:5005 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabybffteleprecoasterisk:latest
 Sac
     docker build --rm -f "MCar.Baby.Microservice.Sac.API/dockerfile"  -t rodoflho/mcarbabymicroservicesac:latest .
     docker push rodoflho/mcarbabymicroservicesac:latest
@@ -48,3 +48,13 @@ Pessoa
     docker push rodoflho/mcarmicroservicepessoa:latest
     sudo docker pull rodoflho/mcarmicroservicepessoa:latest
     sudo docker run -p 11007:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarmicroservicepessoa:latest
+Attendance
+    docker build --rm -f "MercadoCar.MicroService.RestAPI/dockerfile"  -t rodoflho/mcarmicroserviceattendance:latest .
+    docker push rodoflho/mcarmicroserviceattendance:latest
+    sudo docker pull rodoflho/mcarmicroserviceattendance:latest
+    sudo docker run -p 11010:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarmicroserviceattendance:latest
+Orcamento
+    docker build --rm -f "MCar.API/dockerfile"  -t rodoflho/mcarmicroserviceorcamento:latest .
+    docker push rodoflho/mcarmicroserviceorcamento:latest
+    sudo docker pull rodoflho/mcarmicroserviceorcamento:latest
+    sudo docker run -p 11008:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarmicroserviceorcamento:latest
