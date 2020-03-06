@@ -1,0 +1,40 @@
+I just created the k8s on azure. Let´s try to access it locally.
+    Gotta install Azure CLI.
+    https://docs.microsoft.com/pt-br/cli/azure/install-azure-cli?view=azure-cli-latest
+    Run az login
+    Set the same cred. used to gotto azure portal.
+    "az aks install-cli" to install AKS. Set the variables as it commands.
+    Then find the resource group, the k8s cluster name and run:
+    (this command below actually works today)
+    az aks get-credentials --resource-group Arquitetura --name k8s-arquitetura
+    "kubectl get nodes" to see if works
+    Nice. Now we can control k8s on azure locally.
+Let´s try to deploy our Telepreço POC on k8s.
+Then I realised that our docker images are hosted on dockerhub (private ones)
+We need to let kubernetes know it and make it able to pull images from there.
+So lets go:
+    export DOCKER_REGISTRY_SERVER=https://index.docker.io/v1/
+    export DOCKER_USER=Type your dockerhub username, same as when you `docker login`
+    export DOCKER_EMAIL=Type your dockerhub email, same as when you `docker login`
+    export DOCKER_PASSWORD=Type your dockerhub pw, same as when you `docker login`
+
+    kubectl create secret docker-registry myregistrykey \
+    --docker-server=$DOCKER_REGISTRY_SERVER \
+    --docker-username=$DOCKER_USER \
+    --docker-password=$DOCKER_PASSWORD \
+    --docker-email=$DOCKER_EMAIL
+
+    Then the image will be like this on yaml:
+    image: index.docker.io/rodoflho/mcarbabybfftelepreco:latest
+These commands were for private repos on docker hub, but when they are public
+just ignore and lets continue.
+Now, lets edit the yaml. Gonna list my struggle in order of happening:
+    - API versions: v1, v1-beta, I dont know...some of them are not contemplating
+    some keywords like deployment (in vase of v1) and NodePort.
+    - Type: NodePort should be in same level than spec
+    - First I added an deployment, ok. But then tried to add a service too, on the same file.
+    The service wanted to be created, but deployment not. I would like something incrementable.
+    - Nice! The above note can be solved using kubectl apply. "Apply" is the incrementable way, while
+    "create" is imperative.
+    - I tried to access it from Service Post with /swagger (bff) and got nothing... =/
+    --kubectl logs pod_name to see what happened...internal port was 80
