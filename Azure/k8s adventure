@@ -37,4 +37,19 @@ Now, lets edit the yaml. Gonna list my struggle in order of happening:
     - Nice! The above note can be solved using kubectl apply. "Apply" is the incrementable way, while
     "create" is imperative.
     - I tried to access it from Service Post with /swagger (bff) and got nothing... =/
-    --kubectl logs pod_name to see what happened...internal port was 80
+    - kubectl logs pod_name to see what happened...internal port was 80.
+    - Nice, lets describe port naming on service definition:
+        - nodePort
+            This setting makes the service visible outside the Kubernetes cluster by the node’s IP
+            address and the port number declared in this property. The service also has to be of
+            type NodePort (if this field isn’t specified, Kubernetes will allocate a node port automatically).
+        - port
+            Expose the service on the specified port internally within the cluster. That is, the
+            service becomes visible on this port, and will send requests made to this port to the
+            pods selected by the service.
+
+        - targetPort
+            This is the port on the pod that the request gets sent to. Your application needs to be
+            listening for network requests on this port for the service to work.
+    - Even after configuring the ports as following, I´m not getting response from container. Lets keep trying.
+    - After some researching, NodePort will not work on AKS to expose a service, only loadbalance.
