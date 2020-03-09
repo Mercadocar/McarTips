@@ -1,3 +1,4 @@
+# This yaml deploys telepreco BFF alone on k8s.
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:

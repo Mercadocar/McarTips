@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-poc-telepreco-bff
+  labels: 
+    app: poc-telepreco-bff
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 11001
+    targetPort: 80
+  selector:
+    app: poc-telepreco-bff
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: deploy-poc-telepreco-bff
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: poc-telepreco-bff
+    spec:
+      containers:
+      - name: mcarbabybfftelepreco
+        image: rodoflho/mcarbabybfftelepreco:latest

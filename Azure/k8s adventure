@@ -28,7 +28,7 @@ So lets go:
     image: index.docker.io/rodoflho/mcarbabybfftelepreco:latest
 These commands were for private repos on docker hub, but when they are public
 just ignore and lets continue.
-Now, lets edit the yaml. Gonna list my struggle in order of happening:
+Now, lets edit the yaml to make BFF work. Gonna list my struggle in order of happening:
     - API versions: v1, v1-beta, I dont know...some of them are not contemplating
     some keywords like deployment (in vase of v1) and NodePort.
     - Type: NodePort should be in same level than spec
@@ -47,9 +47,27 @@ Now, lets edit the yaml. Gonna list my struggle in order of happening:
             Expose the service on the specified port internally within the cluster. That is, the
             service becomes visible on this port, and will send requests made to this port to the
             pods selected by the service.
-
         - targetPort
             This is the port on the pod that the request gets sent to. Your application needs to be
             listening for network requests on this port for the service to work.
     - Even after configuring the ports as following, I´m not getting response from container. Lets keep trying.
-    - After some researching, NodePort will not work on AKS to expose a service, only loadbalance.
+    - After some researching, NodePort wont work on AKS to expose a service, only loadbalance.
+
+BFF is working. Of course the microservices arent deployed.
+We have 7-9 projects inter-connected in order to make telepreco-poc work.
+Use just plain k8s will be painful, because each repository will require a pod and service deployment each,
+at minimum. Let´s study "Helm" to aggregate all deployments in just one config file.
+    - Searching on the web, I realised that AKS is Helm Ready. I needed to install chocolatey in order to
+    install Helm. I got Helm 3. It worked on our AKS cluster rightaway. So far so good.
+Ok...suppose I got a helm chart with all microservices...how could they talk to each other.
+Before I dive into Helm, I must ensure I can make pods talks thought services with plain k8s. Lets Go:
+    - When we expose a service, we must program a way to discover the service ClusterIP dinamically inside
+    each microservice (pod). How^?
+    - If we create the service ClusterIP before the Pod, the Pod will get host ip and port for each
+    registered services. I saw some examples on internet where when inside the pod using SSH, it curl
+    the service using something like: curl http://$SERVICENAME_SERVICE_HOST:SERVICENAME_SERVICE_PORT.
+    Good, but how to access this values inside aspnetcore3 app?
+    Seems like just configuration.GetValue<string>("ExtraSettingNotInSettingsFile"); straight from:
+    {SVCNAME}_SERVICE_HOST and {SVCNAME}_SERVICE_PORT
+    Well, I need to ensure services are created first. In Yaml, the resources are created in the order
+    they appear.
