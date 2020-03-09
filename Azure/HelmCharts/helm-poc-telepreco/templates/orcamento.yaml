@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-poc-telepreco-orcamento
+  labels: 
+    app: poc-telepreco-orcamento
+spec:
+  type: ClusterIP
+  ports:
+  - port: 11005
+    targetPort: 80
+  selector:
+    app: poc-telepreco-bff-orcamento
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: deploy-poc-telepreco-orcamento
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: poc-telepreco-bff-orcamento
+    spec:
+      containers:
+      - name: mcarmicroserviceorcamento
+        image: rodoflho/mcarmicroserviceorcamento:latest

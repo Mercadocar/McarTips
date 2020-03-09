@@ -1,3 +1,7 @@
+Kubernetes/Helm/Azure/DevOps Adventure.
+A poor man guide to master orchestration.
+
+
 I just created the k8s on azure. Let´s try to access it locally.
     Gotta install Azure CLI.
     https://docs.microsoft.com/pt-br/cli/azure/install-azure-cli?view=azure-cli-latest
@@ -87,3 +91,7 @@ Before I dive into Helm, I must ensure I can make pods talks thought services wi
     the service name changes? Are we gonna change on code manually? The solution is
     Helm Templating. We are going to achieve this later.
     For now, let´s plug the other microservices... 
+    Just installed spekt8 (https://github.com/spekt8/spekt8)
+    To access: kubectl port-forward deployment/spekt8 3000:3000
+    then http://localhost:3000. Trust me, localhost.
+    

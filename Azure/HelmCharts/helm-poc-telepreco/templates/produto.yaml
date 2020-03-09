@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-poc-telepreco-produto
+  labels: 
+    app: poc-telepreco-produto
+spec:
+  type: ClusterIP
+  ports:
+  - port: 11005
+    targetPort: 80
+  selector:
+    app: poc-telepreco-bff-produto
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: deploy-poc-telepreco-produto
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: poc-telepreco-bff-produto
+    spec:
+      containers:
+      - name: mcarbabymicroserviceproduto
+        image: rodoflho/mcarbabymicroserviceproduto:latest
