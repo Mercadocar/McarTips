@@ -71,3 +71,19 @@ Before I dive into Helm, I must ensure I can make pods talks thought services wi
     {SVCNAME}_SERVICE_HOST and {SVCNAME}_SERVICE_PORT
     Well, I need to ensure services are created first. In Yaml, the resources are created in the order
     they appear.
+    I created Sac microservice on k8s and re-created bff. Also need to make sure what are those enviroment
+    variables, so let´s find a command to check pod env. vars.
+    -> kubectl exec -it deploy-poc-telepreco-bff-867765bf6-xx6kr -- sh
+    Once entered in pod's bash:
+    -> printenv
+    And found the SAC envs:
+    SVC_POC_TELEPRECO_SAC_SERVICE_PORT
+    SVC_POC_TELEPRECO_SAC_SERVICE_HOST
+    Lets put it on telepreco bff and see if it gets the host and IP.
+    Modifies are on bff´s SacService, on ctor. Check it out. And lets test.
+    Worked!
+    I realised a problem here: In order to get the url to access a service, we
+    need the service name, like SVC_POC_TELEPRECO_SAC. But what will happen if 
+    the service name changes? Are we gonna change on code manually? The solution is
+    Helm Templating. We are going to achieve this later.
+    For now, let´s plug the other microservices... 
