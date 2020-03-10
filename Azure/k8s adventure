@@ -1,6 +1,8 @@
 Kubernetes/Helm/Azure/DevOps Adventure.
 A poor man guide to master orchestration.
 
+arquitetura@mercadocarmercantil.onmicrosoft.com
+Dovu4129
 
 I just created the k8s on azure. Let´s try to access it locally.
     Gotta install Azure CLI.
@@ -91,7 +93,28 @@ Before I dive into Helm, I must ensure I can make pods talks thought services wi
     the service name changes? Are we gonna change on code manually? The solution is
     Helm Templating. We are going to achieve this later.
     For now, let´s plug the other microservices... 
-    Just installed spekt8 (https://github.com/spekt8/spekt8)
-    To access: kubectl port-forward deployment/spekt8 3000:3000
-    then http://localhost:3000. Trust me, localhost.
-    
+Just installed spekt8 (https://github.com/spekt8/spekt8)
+To access: kubectl port-forward deployment/spekt8 3000:3000
+then http://localhost:3000. Trust me, localhost.
+Nice, I plugged in the other microservices using Helm.
+Tested Helm Install, Upgrade, all working well.
+Let´s upgrade our chart to a chart umbrela, with each microservice
+a single chart, and each kubernetes object a yaml file.
+Helm Umbrella is working! Much more organized than before. Nice.
+Next step: plug a rabbitmq, mongodb and postgreSQl services.
+To install rabbit, seems that I need to add a repository in order to
+helm find the chart.
+    helm repo add azure-marketplace https://marketplace.azurecr.io/helm/v1/repo
+No...I was wrong...Seems like adding repositories to helm is for using "install"
+commands. As I´m building my own chart, and I´m adding habbitmq as a dependency,
+I need to add just the dependency entry on Charts.yaml.
+I´m trying to apply an upgrade to the chart but is not working.
+It´s saying: Error: found in Chart.yaml, but missing in charts/ directory: rabbitmq-ha.
+Ha...It´s mandatory that I enter on the helm chart folder and type:
+    helm dep build
+When I did this, it generated a tgz file inside charts folder. After this,
+the habbitmq worked.
+To access rabbitmq:
+    kubectl port-forward poc-telepreco-rabbitmq-ha-0 7000:15672
+Cant Login. We must set rabbitmq login and pass. But where? I can see
+a lot of examples using helm install, but not with chart as dependency.

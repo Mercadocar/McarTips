@@ -13,18 +13,3 @@ spec:
       containers:
       - name: mcarbabybfftelepreco
         image: rodoflho/mcarbabybfftelepreco:latest
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: svc-poc-telepreco-bff
-  labels: 
-    app: poc-telepreco-bff
-spec:
-  type: LoadBalancer
-  ports:
-  - port: 80
-    targetPort: 80
-  selector:
-    app: poc-telepreco-bff
-  

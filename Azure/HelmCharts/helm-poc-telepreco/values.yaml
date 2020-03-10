@@ -1,0 +1,4 @@
+rabbitmq:
+    replicaCount: 3
+    rabbitmqUsername: guest
+    rabbitmqPassword: guest

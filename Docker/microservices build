@@ -5,56 +5,56 @@
 FRONT
     docker build --rm  -t rodoflho/babypocfrontvue:latest .
     docker push rodoflho/babypocfrontvue:latest
-    sudo docker pull rodoflho/babypocfrontvue:latest
-    sudo docker run -p 11009:8080 -d --restart=always  rodoflho/babypocfrontvue:latest
+    docker pull rodoflho/babypocfrontvue:latest
+    docker run -p 11009:8080 -d --restart=always  rodoflho/babypocfrontvue:latest
 BFF
     docker build --rm -f "MCar.Baby.Bff.Telepreco.API/dockerfile"  -t rodoflho/mcarbabybfftelepreco:latest .
     docker push rodoflho/mcarbabybfftelepreco:latest
-    sudo docker pull rodoflho/mcarbabybfftelepreco:latest
-    sudo docker run -p 11001:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabybfftelepreco:latest
+    docker pull rodoflho/mcarbabybfftelepreco:latest
+    docker run -p 11001:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabybfftelepreco:latest
     http://gitlab:11001/swagger/
 BFF Asterisk
     docker build --rm -f "MCar.Baby.Bff.Telepreco.Asterisk.Web/dockerfile"  -t rodoflho/mcarbabybffteleprecoasterisk:latest .
     docker push rodoflho/mcarbabybffteleprecoasterisk:latest
-    sudo docker pull rodoflho/mcarbabybffteleprecoasterisk:latest
-    sudo docker run -p 11020:5006 -p 11021:5005 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabybffteleprecoasterisk:latest
+    docker pull rodoflho/mcarbabybffteleprecoasterisk:latest
+    docker run -p 11020:5006 -p 11021:5005 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabybffteleprecoasterisk:latest
 Sac
     docker build --rm -f "MCar.Baby.Microservice.Sac.API/dockerfile"  -t rodoflho/mcarbabymicroservicesac:latest .
     docker push rodoflho/mcarbabymicroservicesac:latest
-    sudo docker pull rodoflho/mcarbabymicroservicesac:latest
-    sudo docker run -p 11005:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabymicroservicesac:latest
+    docker pull rodoflho/mcarbabymicroservicesac:latest
+    docker run -p 11005:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabymicroservicesac:latest
 Cliente
     docker build --rm -f "MCar.Baby.Microservice.Cliente.API/dockerfile"  -t rodoflho/mcarbabymicroservicecliente:latest .
     docker push rodoflho/mcarbabymicroservicecliente:latest
-    sudo docker pull rodoflho/mcarbabymicroservicecliente:latest
-    sudo docker run -p 11006:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabymicroservicecliente:latest
+    docker pull rodoflho/mcarbabymicroservicecliente:latest
+    docker run -p 11006:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabymicroservicecliente:latest
 Estoque
     docker build --rm -f "MCar.Baby.Microservice.Estoque.API/dockerfile"  -t rodoflho/mcarbabymicroserviceestoque:latest .
     docker push rodoflho/mcarbabymicroserviceestoque:latest
-    sudo docker pull rodoflho/mcarbabymicroserviceestoque:latest
-    sudo docker run -p 11004:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabymicroserviceestoque:latest
+    docker pull rodoflho/mcarbabymicroserviceestoque:latest
+    docker run -p 11004:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabymicroserviceestoque:latest
 Produto
     docker build --rm -f "Mcar.Baby.Microservice.Produto.API/dockerfile"  -t rodoflho/mcarbabymicroserviceproduto:latest .
     docker push rodoflho/mcarbabymicroserviceproduto:latest
-    sudo docker pull rodoflho/mcarbabymicroserviceproduto:latest
-    sudo docker run -p 11003:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabymicroserviceproduto:latest
+    docker pull rodoflho/mcarbabymicroserviceproduto:latest
+    docker run -p 11003:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabymicroserviceproduto:latest
 Asterisk
     docker build --rm -f "MCar.Baby.Asterisk.Client/dockerfile"  -t rodoflho/mcarbabyasterisk:latest .
     docker push rodoflho/mcarbabyasterisk:latest
-    sudo docker pull rodoflho/mcarbabyasterisk:latest
-    sudo docker run -p 11002:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabyasterisk:latest
+    docker pull rodoflho/mcarbabyasterisk:latest
+    docker run -p 11002:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabyasterisk:latest
 Pessoa
     docker build --rm -f "MCar.Microservice.Pessoa.API/dockerfile"  -t rodoflho/mcarmicroservicepessoa:latest .
     docker push rodoflho/mcarmicroservicepessoa:latest
-    sudo docker pull rodoflho/mcarmicroservicepessoa:latest
-    sudo docker run -p 11007:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarmicroservicepessoa:latest
+    docker pull rodoflho/mcarmicroservicepessoa:latest
+    docker run -p 11007:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarmicroservicepessoa:latest
 Attendance
     docker build --rm -f "MercadoCar.MicroService.RestAPI/dockerfile"  -t rodoflho/mcarmicroserviceattendance:latest .
     docker push rodoflho/mcarmicroserviceattendance:latest
-    sudo docker pull rodoflho/mcarmicroserviceattendance:latest
-    sudo docker run -p 11010:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarmicroserviceattendance:latest
+    docker pull rodoflho/mcarmicroserviceattendance:latest
+    docker run -p 11010:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarmicroserviceattendance:latest
 Orcamento
     docker build --rm -f "MCar.API/dockerfile"  -t rodoflho/mcarmicroserviceorcamento:latest .
     docker push rodoflho/mcarmicroserviceorcamento:latest
-    sudo docker pull rodoflho/mcarmicroserviceorcamento:latest
-    sudo docker run -p 11008:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarmicroserviceorcamento:latest
+    docker pull rodoflho/mcarmicroserviceorcamento:latest
+    docker run -p 11008:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarmicroserviceorcamento:latest
