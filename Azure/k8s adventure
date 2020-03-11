@@ -2,7 +2,7 @@ Kubernetes/Helm/Azure/DevOps Adventure.
 A poor man guide to master orchestration.
 
 arquitetura@mercadocarmercantil.onmicrosoft.com
-Dovu4129
+Dovu41293
 
 I just created the k8s on azure. Let´s try to access it locally.
     Gotta install Azure CLI.
@@ -112,9 +112,34 @@ I´m trying to apply an upgrade to the chart but is not working.
 It´s saying: Error: found in Chart.yaml, but missing in charts/ directory: rabbitmq-ha.
 Ha...It´s mandatory that I enter on the helm chart folder and type:
     helm dep build
+    helm dep update (if you want to repeat later)
 When I did this, it generated a tgz file inside charts folder. After this,
 the habbitmq worked.
 To access rabbitmq:
-    kubectl port-forward poc-telepreco-rabbitmq-ha-0 7000:15672
+    kubectl port-forward poc-telepreco-rabbitmq-0 7000:15672
 Cant Login. We must set rabbitmq login and pass. But where? I can see
 a lot of examples using helm install, but not with chart as dependency.
+Solution: add a values.yaml with rabbitmq config (check file). I wrote
+down the credentials and worked. Needed to reinstall to make changes.
+Ahh...I would like to have pods with containers pulled when helm install,
+but unfortunately they are not re-created, so I need to uninstall every time.
+How to accomplish this? Dont know and its not important now.
+So, lets install mongodb. Already added it as dependency.
+Lets restart microservice-pessoa to check the name of the mongodbservice
+    -> kubectl scale deployment deploy-poc-telepreco-pessoa --replicas=0
+    -> kubectl scale deployment deploy-poc-telepreco-pessoa --replicas=1
+    (just scale to zero, than to one again).
+Mongodb Working. It required auth from me, but I disabled it just to connect,
+on values.yaml again.
+Since mongodb is working on pessoa, lets try rabbitmq. It´s working nice.
+Lets install postgre...should be easy
+Oh, stopping the deploy a little bi...lets install dashboard?
+Dont run these commands: See why next
+    -> kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0-beta8/aio/deploy/recommended.yaml
+    -> kubectl proxy
+    -> http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/.
+Seems like this is not the right way to run dashboard, cos there is a AKS way to do this.
+    -> az aks browse --resource-group Arquitetura --name k8s-arquitetura
+    -> kubectl create clusterrolebinding kubernetes-dashboard --clusterrole=cluster-admin --serviceaccount=kube-system:kubernetes-dashboard
+Voilá! Kubernetes Dashboard.
+

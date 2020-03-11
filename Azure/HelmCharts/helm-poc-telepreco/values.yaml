@@ -1,4 +1,9 @@
 rabbitmq:
-    replicaCount: 3
-    rabbitmqUsername: guest
-    rabbitmqPassword: guest
+  replicaCount: 3
+  rabbitmqUsername: guest
+  rabbitmqPassword: guest
+mongodb:
+  usePassword: false
+postgresql:
+  postgresqlPassword: postgres
+  
