@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
+data:
+  test.server: |
+    .:53 {
+      log stdout
+        health
+      kubernetes cluster.local
+        proxy . /etc/resolv.conf
+        cache 30
+    }

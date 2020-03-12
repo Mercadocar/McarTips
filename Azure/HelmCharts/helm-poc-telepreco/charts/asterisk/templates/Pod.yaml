@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: deploy-poc-telepreco-asterisk
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: poc-telepreco-bff-asterisk
+    spec:
+      containers:
+      - name: mcarbabymicroserviceasterisk
+        image: rodoflho/mcarbabyasterisk:latest

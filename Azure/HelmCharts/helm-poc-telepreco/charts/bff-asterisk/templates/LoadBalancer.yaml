@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-poc-telepreco-bff-asterisk
+  labels: 
+    app: poc-telepreco-bff-asterisk
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: poc-telepreco-bff-asterisk
+  

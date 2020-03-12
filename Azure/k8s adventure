@@ -142,4 +142,20 @@ Seems like this is not the right way to run dashboard, cos there is a AKS way to
     -> az aks browse --resource-group Arquitetura --name k8s-arquitetura
     -> kubectl create clusterrolebinding kubernetes-dashboard --clusterrole=cluster-admin --serviceaccount=kube-system:kubernetes-dashboard
 Voilá! Kubernetes Dashboard.
+I´m trying to move away from enviroment variables inside pods to the Core-Dns Solution. The coredns listens for services
+and exposes them like myservice.mydomain.com inside the cluster. Much better solution.
+Unfortunately, Helm will not help this. When I add the custom config, the helm complains that the object Already
+exists in the cluster, what is completely right: aks deploys a core-dns object by default. 
+Unfortunately, to configure the core-dns we need to use kubectl apply. This is a flaw in Helm and it´s not perfect
+as I was expecting, really a lame.
+So, Just to ensure: to configure cluster dns, forget helm. Do it straight in k8s.
+I lost 2 hours trying to make core-dns work. Gonna give up and keep using enviroment variables. Lets try again later.
+The next plausible step is make sure all microservices are connected. On it.
+I´m so lazy...and deploy this is very tiring.
+Lets study some market products whom can help our setup. See:
+Istio (service mesh, hard to configure)
+Linkerd (service mesh too...but lightweight and promisses simplicity)
+Gloo (built on top of envoy)
+
+
 

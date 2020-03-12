@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: deploy-poc-telepreco-frontend
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: poc-telepreco-frontend
+    spec:
+      containers:
+      - name: mcarbabymicroservicefrontend
+        image: rodoflho/babypocfrontvue:latest
