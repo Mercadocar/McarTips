@@ -1,8 +1,0 @@
-"Kestrel": {
-    "EndpointDefaults": {
-        "Protocols": "Http2"
-    }
-},
-
-
-AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
