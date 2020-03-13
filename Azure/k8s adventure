@@ -156,6 +156,6 @@ Lets study some market products whom can help our setup. See:
 Istio (service mesh, hard to configure)
 Linkerd (service mesh too...but lightweight and promisses simplicity)
 Gloo (built on top of envoy)
-
+Kong
 
 
