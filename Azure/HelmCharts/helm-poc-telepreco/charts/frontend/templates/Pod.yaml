@@ -12,3 +12,4 @@ spec:
       containers:
       - name: mcarbabymicroservicefrontend
         image: rodoflho/babypocfrontvue:latest
+        imagePullPolicy: Always

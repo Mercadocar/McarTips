@@ -12,3 +12,4 @@ spec:
       containers:
       - name: mcarbabymicroserviceestoque
         image: rodoflho/mcarbabymicroserviceestoque:latest
+        imagePullPolicy: Always

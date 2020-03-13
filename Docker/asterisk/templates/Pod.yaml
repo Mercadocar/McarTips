@@ -12,3 +12,4 @@ spec:
       containers:
       - name: mcarbabymicroserviceasterisk
         image: rodoflho/mcarbabyasterisk:latest
+        imagePullPolicy: Always

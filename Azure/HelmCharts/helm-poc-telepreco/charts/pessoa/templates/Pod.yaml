@@ -12,3 +12,4 @@ spec:
       containers:
       - name: mcarmicroservicepessoa
         image: rodoflho/mcarmicroservicepessoa:latest
+        imagePullPolicy: Always

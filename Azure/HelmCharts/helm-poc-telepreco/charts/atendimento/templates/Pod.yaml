@@ -12,3 +12,4 @@ spec:
       containers:
       - name: mcarmicroserviceattendance
         image: rodoflho/mcarmicroserviceattendance:latest
+        imagePullPolicy: Always

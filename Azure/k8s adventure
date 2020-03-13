@@ -153,9 +153,20 @@ I lost 2 hours trying to make core-dns work. Gonna give up and keep using enviro
 The next plausible step is make sure all microservices are connected. On it.
 I´m so lazy...and deploy this is very tiring.
 Lets study some market products whom can help our setup. See:
-Istio (service mesh, hard to configure)
-Linkerd (service mesh too...but lightweight and promisses simplicity)
-Gloo (built on top of envoy)
-Kong
+    Istio (service mesh, hard to configure)
+    Linkerd (service mesh too...but lightweight and promisses simplicity)
+    Gloo (built on top of envoy)
+    Kong
+I developed a easy and centralized (on data-contracts) way to get services host and IP.
+You can check on ServiceDiscovery folder on MCarDataContracts and on gRPC services on bff.
+Lets test this new way? On Pessoa first.
+I just modified Bff to test pessoa. Built BFF and pushed to dockerhub. But, just a kubectl apply
+will cause the image to be pulled? Seems not because the pod wasnt restarted. So...
+The solution is: put imagePullPolicy: Always on Pod.yaml and image:latest. And because
+this is a deployment, the pod will be recreated. Cool. Lets update all pods to this way.
+PROBLEM: asterisk-microservice is not starting and causing incremental pod creation with 
+"evicted" status. Command to delete these failed pods:
+     kubectl -n default delete pods --field-selector=status.phase=Failed
+Too many logs and many tries to connect to BFF. Lets delete it and connect them first.
 
 

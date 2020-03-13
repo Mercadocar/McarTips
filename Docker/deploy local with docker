@@ -58,3 +58,10 @@ Orcamento
     docker push rodoflho/mcarmicroserviceorcamento:latest
     docker pull rodoflho/mcarmicroserviceorcamento:latest
     docker run -p 11008:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarmicroserviceorcamento:latest
+
+Other annotations:
+
+PyRabbitJob
+    docker build --rm -t rodoflho/mcarmicroservicesutilspyrabbitjob:latest .
+    docker run -p 80:80 rodoflho/mcarmicroservicesutilspyrabbitjob:latest
+    docker push rodoflho/mcarmicroserviceorcamento:latest

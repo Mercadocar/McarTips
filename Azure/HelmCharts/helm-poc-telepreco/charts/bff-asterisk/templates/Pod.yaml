@@ -13,3 +13,4 @@ spec:
       containers:
       - name: mcarbabybffteleprecoasterisk
         image: rodoflho/mcarbabybffteleprecoasterisk:latest
+        imagePullPolicy: Always
