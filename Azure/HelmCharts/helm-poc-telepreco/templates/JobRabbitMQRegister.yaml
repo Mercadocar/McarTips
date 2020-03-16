@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-rabbitmq-create-resources
+  labels:
+    jobgroup: jobs-rabbitmq
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": post-install
+spec:
+  template:
+    metadata:
+      name: job-rabbitmq-create-resources
+      labels:
+        jobgroup: jobs-rabbitmq
+    spec:
+      containers:
+      - name: jobrabbitmqcreateresources
+        image: rodoflho/mcarmicroservicesutilspyrabbitjob:latest
+      restartPolicy: OnFailure

@@ -64,4 +64,4 @@ Other annotations:
 PyRabbitJob
     docker build --rm -t rodoflho/mcarmicroservicesutilspyrabbitjob:latest .
     docker run -p 80:80 rodoflho/mcarmicroservicesutilspyrabbitjob:latest
-    docker push rodoflho/mcarmicroserviceorcamento:latest
+    docker push rodoflho/mcarmicroservicesutilspyrabbitjob:latest

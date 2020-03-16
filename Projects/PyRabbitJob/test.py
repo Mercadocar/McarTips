@@ -1,2 +1,4 @@
 #!/usr/bin/env python
-print("ok")
+import os
+
+print(os.environ['POC_TELEPRECO_RABBITMQ_SERVICE_HOST'])

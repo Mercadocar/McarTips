@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import pika
+import os
 
-connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+connection = pika.BlockingConnection(pika.ConnectionParameters(os.environ['POC_TELEPRECO_RABBITMQ_SERVICE_HOST']))
 channel = connection.channel()
 
 channel.exchange_declare(exchange='Pessoa',
