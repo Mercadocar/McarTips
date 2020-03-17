@@ -16,11 +16,8 @@ RUN apk update && \
 ADD requirements.txt .
 RUN python -m pip install -r requirements.txt
 
-# Delete packages to reduce image size
-RUN apk del --no-cache gcc python-dev musl-dev postgresql-dev
-
 WORKDIR /app
 ADD . /app
 
 # During debugging, this entry point will be overridden. For more information, refer to https://aka.ms/vscode-docker-python-debug
-CMD ["python", "pyRabbitQueue.py"]
+CMD ["python", "clusterInit.py"]

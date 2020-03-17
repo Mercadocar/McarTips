@@ -1,9 +1,9 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: job-rabbitmq-create-resources
+  name: job-cluster-init
   labels:
-    jobgroup: jobs-rabbitmq
+    jobgroup: jobs-cluster-init
   annotations:
     # This is what defines this resource as a hook. Without this line, the
     # job is considered part of the release.
@@ -11,11 +11,11 @@ metadata:
 spec:
   template:
     metadata:
-      name: job-rabbitmq-create-resources
+      name: job-cluster-init
       labels:
-        jobgroup: jobs-rabbitmq
+        jobgroup: jobs-cluster-init
     spec:
       containers:
-      - name: jobrabbitmqcreateresources
-        image: rodoflho/mcarmicroservicesutilspyrabbitjob:latest
+      - name: jobclusterinit
+        image: rodoflho/mcarmicroserviceclusterinitjob:latest
       restartPolicy: OnFailure
