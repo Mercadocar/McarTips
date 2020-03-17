@@ -7,9 +7,17 @@ ENV PYTHONDONTWRITEBYTECODE 1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED 1
 
+RUN apk update && \
+    apk add --virtual build-deps python-dev musl-dev && \
+    apk add postgresql-dev && \
+    apk add --update --no-cache gcc
+
 # Install pip requirements
 ADD requirements.txt .
 RUN python -m pip install -r requirements.txt
+
+# Delete packages to reduce image size
+RUN apk del --no-cache gcc python-dev musl-dev postgresql-dev
 
 WORKDIR /app
 ADD . /app
