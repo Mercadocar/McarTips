@@ -187,4 +187,4 @@ created before they deploy, its important to create these microservices after al
 So they weight are the highest of all. Also I need to configure their docker to perform
 migrate in order to create the tables structure. Lets get into it?
 
-
+ 
