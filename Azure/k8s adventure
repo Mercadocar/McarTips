@@ -168,5 +168,23 @@ PROBLEM: asterisk-microservice is not starting and causing incremental pod creat
 "evicted" status. Command to delete these failed pods:
      kubectl -n default delete pods --field-selector=status.phase=Failed
 Too many logs and many tries to connect to BFF. Lets delete it and connect them first.
+After some time out of this adventure, lets continue>
+We got a problem here: after a clear install, the rabbitmq lose its queues and exchanges.
+So we need to register them every time, but by hand? Surely not. Programatically yes.
+Kubernetes Jobs are pods that run a container and die, or run like a cron. We choose to run
+a job and die, with a py scripty that registers those rabbit objects and also create some
+postgres databases, that are not created automatically. This py script is under a dockerfile,
+of course, that run a python-alpine dist. It runs the script and done.
+The poc-telepreco top chart got only sub charts like an umbrella, but now it got a template.
+Its our job. But how make it run after the postgres and rabbit services are available? How
+to make sure? 
+Helm Hooks are the answer. Check the chart annotations. We can tell helm when this yaml will
+run and even define weights:
+Helm Hook Weights are read by helm by ascendent count. So hook 1 will happen before hook 2 
+and so on. Very nice to define a queue of kubernetes objects to be deployed.
+For the attendance and budget microservices, that needs orcamento and atendimento databases
+created before they deploy, its important to create these microservices after all others.
+So they weight are the highest of all. Also I need to configure their docker to perform
+migrate in order to create the tables structure. Lets get into it?
 
 
