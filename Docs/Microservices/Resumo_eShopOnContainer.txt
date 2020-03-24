@@ -1,0 +1,424 @@
+Resumo do livro eShopOnContainer, estabelecendo interpretações para o uso vantajoso de microsserviços no ambiente da Mercadocar (e não a teoria pura e detalhada de cada um dos conceitos, o que acabaria inchando este resumo a ponto de ter o tamanho do próprio livro).
+
+> Containers
+Recomendado usar .net core em containers de microsserviços, pois é mais leve e rápido que o .net framework.
+
+Há diferentes imagens docker com versões de SO diferentes para se basear na criação de suas imagens docker customizadas (hospedadas no Docker Hub), podendo rodar no Docker Host de servidores Windows ou Linux (como runtime:2.2), ou sendo específicos para SOs (como a aspnet:2.2-alpine para Linux Alpine). Também existem versões otimizadas para ambiente de desenvolvimento (como sdk:2.2) e produção (aspnet:2.2).
+
+Um container é uma imagem instanciada, sendo dividido em áreas de leitura e gravação. 
+
+É recomendado utilizar Volumes ao invés de Bind Mounts (o primeiro cria um diretório fisico dentro do domínio do Docker Host e o segundo cria um diretório no SO do servidor). Para um armazenamento descartável existe o Tmpfs Mounts (diretórios virtuais em memória). Independente da forma de armazenamento dos containers, eles são recomendados apenas para arquivos temporários, de trace, log, etc; dados de negócio devem ser persistidos em BD externos ao container.
+
+Arquivos docker são por projeto de endpoint (APIs) e o VS possui scaffolding (geração automática de código modelo) dele. Quando é necessário considerar a uma aplicação como um conjunto de serviços, é necessário utilizar o docker compose, que gerencia a construção de múltiplas imagens e instanciação de múltiplos containers, estabelecendo um deles como entrypoint (o VS também possui scaffolding do arquivo docker-compose.yml, ficando o arquivo no nível da solução). O docker compose controla múltiplos containers de uma mesma máquina, enquanto o docker swarm faz o mesmo trabalho mas em máquinas diferentes.
+
+Para ter mais segurança ou evitar erros, é possível sobrescrever valores dos arquivos de configuração através do arquivo docker-compose.override.yml (podendo ter um arquivo por ambiente), ou utilizar o Azure Key Vault para armazenar segredos (e que ambiente de desenvolvimento não terá acesso). Adicionalmente, arquivos docker-compose podem acessar variáveis de ambiente (contidas no launchSettings.json).
+
+Docker compose serve também como uma forma de documentação de quais containers de dependência determinado serviço possui.
+
+Também existe a ferramenta Docker Machine, responsável por remotamente instalar docker engine em qualquer host de sua rede (assim como updates do docker), administrando containers. Kubernates é uma alternativa ao Docker Machine, porém, muito mais completa e utilizada no mercado. Ambas são conhecidas como orquestradores de containers.
+
+> Microsserviços
+Tamanho não importa mas sim sua coesão interna e independência de outros serviços, além de independência de deploy, versionamento e escalabilidade. 
+
+Um microsserviço precisa possuir a soberania de seus dados (não se compartilha BD entre microsserviços). Também deve possuir os dados necessários para desempenhar suas funções sem depender de outros microsserviços.
+
+> Benefícios
+- Costumam ser pequenos (pois possuem escopo bem determinado), o que facilita entendimento inicial, gerenciamento e evolução.
+- Permitem que um determinado serviço que trata um processo com crescimento de utilização seja escalado (e não a aplicação como um todo).
+- Permitem dividir melhor areas de negócio por time de desenvolvimento (pois terão maior autonomia de desenvolvimento e gerenciamento).
+- Oferece isolamento por assunto, tanto na administração como em impacto.
+- Permite liberdade de tecnologia, pois como cada um é independente pode ser usado a melhor tecnologia que resolver determinado problema.
+
+> Boas práticas para ter sucesso
+- mecanismo de monitoramento da saúde dos serviços e infraestrutura (health checks).
+- infraestrutura de escalabilidade.
+- diversos níveis de segurança, como: autenticação, autorização, gerenciamento de segredos (logins, senhas), canal de comunicação seguro.
+- times especializados em contexto de negócio (microsserviços).
+- infraestrutura e práticas de CI/CD, papel de devops.
+
+> Desvantagens
+- Aplicações distribuídas aumentam a complexidade no seu design e construção.
+- Aumentam complexidade de deploy ou demanda grande esforço e conhecimento para configurar uma ferramenta de orquestração e agendamento de microsserviços (ex: Kubernates).
+- Substitui atomicidade de transações por consistência eventual, aumentando complexidade e esforço de desenvolvimento (ver tópico Teorema CAP).
+- Aumenta uso total de recursos de hardware, embora isso seja mitigado com o tempo devido a escalabilidade específica por serviço e também pelo custo da soma de múltiplos servidores pequenos ser menor do que um servidor grande.
+- Complexidade em dividir os microsserviços, levando a necessidade de refatorar diversas vezes.
+
+> Arquitetura interna vs externa
+A arquitetura externa refere-se a uma visão mais geral das partes de software envolvidas, como: cliente (MVC, SPA, Mobile), API Gateway, microsserviços, comunicação por mensageria entre microsserviços, etc.
+
+A arquitetura interna refere-se a uma visão detalhada do microsserviço em si, como: divisão de camadas de software, padrões de projeto, SOLID, linguagem de programação, etc. A arquitetura interna pode ser diferente em cada microsserviço, podendo ser um simples Transaction Script (uma classe contendo regra de negócio, estado e acesso a BD) para serviços simples (como aplicações CRUD) ou DDD para serviços complexos.
+
+> Fronteiras
+Um microsserviço representa um Bounded Context (do DDD), com seu modelo de domínio e dados próprios. Porém, esse microsserviço "de negócio" pode ser formado por vários serviços "físicos", pois microsserviço é uma arquitetura lógica e não física (pg 33). O que importa é o Bounded Context ou microsserviço de negócio ser implementado de forma a ser independentemente versionado, liberado e escalado. Esse cenário também não impede que seja feita uma escalabilidade horizontal (duplicação de instância para balancear a carga de trabalho) de um serviço que compõe um microsserviço.
+
+Uma dica para ajudar a identificar um Bounded Context (microsserviço) é identificar no negócio a diferente terminologia (ex: é utilizado o termo estoquista, conferente ou comprador em contextos diferentes, embora o dado seja o mesmo).
+
+> Agregação de dados
+Quando é necessário que uma tela utilize dados de diferentes microsserviços, geralmente usa-se as seguintes estratégias:
+- API Gateway - uma API responsável por fazer a consulta e junção desses dados (agregação) para um cliente.
+- CQRS com tabelas de consulta - padrão de views materializadas (uma tabela desnormalizada preparada especificamente para a necessidade de consulta de um cliente). Normalmente ela é gerada a partir de "commands" que ocorrem em determinado microsserviço.
+- Cold data em BD centralizado - dados extraidos dos BDs dos microsserviços e armazenados para simplificar consultas complexas ou relatórios, podendo ser feito via rotinas agendadas (jobs, webjobs), eventos (como o CQRS descrito anteriormente) ou ferramentas de ETL. Note que a necessidade de utilizar essa técnica para criar muitas consultas complexas (não confundir com relatórios!) serve de indicativo de que seus microsserviços deveriam ser fundidos em um só.
+
+> DDD em microsserviços
+Divide-se em 3 camadas:
+- Aplicação: implementado como um projeto web de entrada (como ASP.NET Web API/MVC), com Commands/Command Handlers e Querys (quando usado CQRS). Efetua a orquestração e persistência do domínio e invocação de eventos de integração, além de acesso a serviços de terceiros.
+- Domínio: possui entidades que contêm as regras de negócio, mas é ignorante com a forma de persistência. Utiliza-se geralmente padrões como aggregate (agregação), aggregate root, domain entity, value object, repository contracts.
+- Infraestrutura: implementa a mecânica de persistência, com uso de ORMs, ADO.NET, APIs de BD NoSQL, etc. Também implementa detalhes técnicos, como logging, criptografias, etc.
+
+> Padrão Domain Entity (DE)
+Entidades são objetos de domínio, que possuem identidade, atributos (dados) e comportamentos. Quando o comportamento é levado para outro objeto (de serviço, por ex.), aquele modelo é chamado de Anêmico (Anemic Domain Model), sendo considerado anti-pattern quando usado em domínios que não são simples.
+
+> Padrão Value Object (VO)
+Objetos de valor são aqueles que não tem identidade, isto é, dizem "o que são" e não "quem são". Como não possuem ID, o processo de comparação com outros VOs é feito testando todos (ou a maioria) dos seus atributos. Normalmente são objetos imutáveis e são persistidos no BD como campos em uma tabela que representa uma entidade de domínio. Na teoria, podem substituir todos os tipos primitivos dos atributos das entidades de domínio, permitindo colocar suas regras de validação (tamanho máximo, tamanho mínimo, etc) em classes apartadas com clareza de significado e tornar a aplicação mais aderente ao Principio de Responsabilidade Unica do SOLID. São exemplos de VO: dinheiro, endereço, nome, sobrenome, etc. 
+
+> Padrão Aggregate
+Considera um conjunto de entidades (entidade de domínio e VO) que só são consideradas consistentes se existirem juntas. A agregação é que efetua as validações necessárias para garantir essa consistência. Uma forma de identificá-los é fazer uma analogia das entidades com a atomicidade de tabelas de BD.
+
+Dentro dos aggregates existe uma entidade que serve de porta de entrada para todas as operações, uma vez que seus atributos precisam estar inacessíveis para o restante da aplicação (private ou readonly) para evitar que seja possível burlar uma regra implementada em seus métodos. Ela é a chamada aggregate root (raiz de agregação). Ex: No Aggregate Pedido, a entidade de domínio Pedido é aggregate root, o item de pedido é um Domain Entity e o tipo de item é um Value Object, sendo possível adicionar itens apenas através de um método fornecido na classe Pedido (e não fazendo Add em seu atributo Item do tipo coleção).
+
+É possível que um aggregate root faça referência para outro aggregate root, porém, essa referência não deve conter uma navigation property (Entity Framework), mas sim uma propriedade com o tipo primitido dessa FK.
+
+> Padrão Interface Separated
+Consiste em declarar interfaces em um pacote de software (dll) e sua implementação em outro. No caso do DDD, é usado para definir os contratos do repositório no domínio e implementá-los no repositório, permitindo que seu domínio/aplicação solicite tais operações sem ter dependências externas de BD (como EF, ADO.NET, etc.).
+
+> SeedWork
+É um conjunto de classes base customizadas que serão reutilizadas pela aplicação. Também conhecemos como Common, SharedKernel, etc. Não se considera um framework por ser muito pequeno, mas, caso cresça, pode ser apartado em uma biblioteca específica.
+
+> Enumerados
+Usar enums para controle de fluxo pode ser code smell (código mal-cheiroso, código ruim) devido a tais verificações se espalharem no código rapidamente, causando problemas de manutenção. Recomenda-se usar uma classe base de enumeração (conhecido como SmartEnum), onde implementa os atributos ID/Nome e métodos de comparação/conversão, cujas classes que a implementam podem possuir regras de transição de estados, validações, etc., sendo uma estrutura muito melhor de efetuar manutenção (aderente ao princípio de responsabilidade única do SOLID).
+
+> Validações de design
+Uma entidade de domínio só pode existir em um estado válido (conhecido como invariant). É de responsabilidade do aggregate root controlar que todas as suas entidades de domínio/objetos de valor estejam em estado válido (para muitos objetos relacionados que serão válidos apenas quando todos forem criados, é possível utilizar o padrão Factory). Um exemplo de entidade de domínio com estado válido é um item de pedido não pode existir com quantidade negativa, sem nome de produto e preço.
+
+Essas validações normalmente são feitas no construtor das entidades de domínio/objetos de valor ou em seus métodos de permitem a alteração de seu estado. Quando uma validação é violada, é possível lançar exceptions ou utilizar padrões como o de Especificação e Notificação.
+
+Também é recomendado efetuar validações do lado do cliente, para que um erro de preenchimento não precise esperar um processamento do servidor para informá-lo do problema, assim como economizar recursos de hardware do servidor. Suas formas de implementação variam de acordo com a implementação do cliente, podendo ser via Javascript, DataAnnotations em ViewModels em aplicações MVC, código C# em Xamarin, etc. Lembrando que validações do cliente não eliminam a necessidade de validações no servidor, e essa duplicidade de validação não é um ponto negativo mas sim um indício de que sua aplicação é pró-ativa.
+
+> Eventos de Domínio
+Representam algo que aconteceu e que outras partes do domínio precisam reagir a isso (outros aggregates). São como eventos de integração, porém, dentro de um mesmo domínio, podendo ser síncrono ou assíncrono e aceitando também consistência eventual. São compostos por uma mensagem (uma classe armazenando estado - DTO) e um evento (cujo nome deve estar no passado, pois é uma ação que aconteceu). Ambos situam-se na camada de aplicação, uma vez que provavelmente vão fazer uso do repositório para persistir algum dado, sendo uma alternativa interessante ao domain service, pois possibilita que novas regras sejam implementadas criando-se classes novas e não modificando uma classe orquestradora (aderente ao princípio Open/Closed do SOLID). São muitas vezes implementados usando o padrão mediator (publisher/subscriber), sendo utilizado o NuGet package MediaR para C#.
+
+Recomenda-se não publicar eventos de domínio dentro de handlers de eventos de domínio, criando-se cascatas de eventos, o que poderia levar a uma execução circular infinita. O correto é publicá-los dentro de entidades de domínio (por isso do nome eventos DE domínio). Já eventos de integração podem ser disparados de eventos de domínio. 
+
+As seguintes abordagens para publicação de eventos de domínio são: 
+- in process - diretamente dentro do processo em execução, gerando uma thread paralela imediata para processamento daquele evento (isso pode prejudicar testes unitários e debug devido aos side-effects não desejados durante tais tarefas)
+- deferred approach (abordagem adiada) - o evento é adicionado em uma coleção de eventos, que podem ser processados imediatamente antes ou depois que o SaveChanges do ORM é chamado (se for antes os "side effects" estarão junto com o comando principal em um único "begin tran", e se for depois deverá ser tratado a consistência eventual com eventos de compensação).
+
+Outra recomendação é tornar as classes de evento imutáveis (com atributos readonly por padrão, ou apenas "private set" se for necessário deserializá-lo pelo message broker).
+
+> Padrão Repository
+É uma abstração de acesso a dados, agindo como um intermediário entre o domínio da aplicação e o mecanismo de persistencia. Diferente do padrão DAL (Data Access Layer) que representa tabelas em um BD, o repositório está  atrelado a um aggregate root, conhecendo suas interligações e manipulando aquela entidade de forma completa (cabeçalho, itens, etc), tanto para consultas como gravações (gerenciando ou exigindo controle transacional). ORMs como o Entity Framework ou o NHibernate auxiliam na aplicação do conceito de repositório devido as suas abstrações oferecidas de persistência, navigation properties e unit of work (usando o change tracker do DbContext do EF, por exemplo).
+
+> Padrão Unit of Work
+Consiste em garantir a atomicidade de dados no BD, isto é, em cenários de múltiplas operações de gravação, todas elas são concluídas com sucesso ou nada é gravado.
+
+> Entity Framework (EF)
+Recomenda-se seu uso por oferecer uma tipagem forte de objetos do seu modelo e pela mecânica simplificada de persistência para BD relacionais, além de funcionar tanto em ambientes Windows como Linux (SO recomendado para ambientes trabalhando com containers). Quando usado junto com o padrão repository, facilita o mock dos objetos de persistência nos testes unitários.
+
+Tanto o DbContext do EF quanto a classes de repositórios no container IOC devem ser scoped (por requisição em aplicações web).
+
+Existem 2 formas de mapear o modelo com as tabelas do BD: 
+- via data annotation - consiste em colocar atributos nas classes de model, sendo eles de classe e de propriedades
+- fluent api - consiste em configurar esse De > Para entre os objetos de modelo e o nomes das tabelas e colunas do BD na camada de persistência, podendo ser feito no método OnModelCreating do DbContext ou criando classes de mapeamento para cada modelo (divisão de código geralmente é melhor, mas depende da quantidade de modelos no seu domínio).
+
+A abordagem recomendada é via fluent api devido a tornar as classes de modelo de domínio ignorantes a informações de persistência.
+
+Por padrão, o EF utiliza convenções para fazer o mapeamento automático (presume que campos PK na tabela tenham o nome "Id", por exemplo), reduzindo código, porém, é flexível para que seja configurado para entender outras nomenclaturas de BD adotadas. Também suporta o mapeamento de atributos de classe, cujo objetivo é não expor aquele dado para fora do model (geralmente private, sendo usados apenas para gravação).
+
+O EF também suporta o algoritmo Hi/Lo, que trata da geração de Ids evitando colisão, com formato amigável (numérico) e evitando idas ao BD, tudo isso suportando o padrão Unit of Work (https://stackoverflow.com/a/24368478).
+
+Como forma de extração de dados, o EF trabalha com:
+- explicit loading - retorna apenas os dados do model, sem o preenchimento das navegation properties (serão nulas definitivamente). Para carregá-las, é necessário codificar essa necessidade via "Include".
+- lazy loading - igual ao anterior, porém, no momento que uma navegation property é utilizada para leitura, o DbContext dispara uma nova consulta para o BD trazendo aqueles dados. Isso é útil em situações onde aqueles dados adicionais TALVEZ sejam lidos (dependendo do fluxo da aplicação), porém, podem causar acessos adicionais ao BD que degradam a performance dependendo do cenário, sendo um problema pouco perceptível ao desenvolvedor para identificá-lo. No EF Core, está disponível apenas a partir da versão 2.1.
+- eager loading - retorna todos os dados do model, juntamente com as navegation properties. Isso permite diminuir a quantidade de acesso ao BD, porém, é preciso especificar muito bem o modelo para não carregar dados desnecessários e/ou degradar demais o carregamento daquela consulta.
+
+> Padrão Specification
+Prega a criação de classes no domínio contendo critérios para consultas nos repositórios, promovendo a remoção de tais regras da camada de persistência e reuso de código. Ele possui várias implementações (uma vez que é um padrão antigo), mas as atuais e mais interessantes fazem uso de Linq e expressions no C# (pg 238 e 249). Uma vez que permitem restringir o conjunto de dados da consulta, removem a necessidade de utilizar lazy loading.
+
+> NoSQL
+BD não relacionais geralmente não utilizam um ORM como o EF ou o NHibernate, mas sim APIs oferecidas pelo motor do NoSQL.
+
+BD orientados a documentos (como Azure Cosmos DB, CouchBD, RavenDB) se encaixam bem com o padrão aggregate do DDD devido a sua forma de armazenamento (com estruturas aninhadas, como o JSON). 
+
+> Azure Cosmos DB
+NoSQL distribuído que permite trabalhar com armazenamento orientado a documentos, chave-valor, grafos e dados baseados em colunas (ao invés de linhas, que é o mais comum em RDBMS). Ele foi construído para garantir escalonamento de processamento e armazenamento, mínima latência, manutenção reduzida (geração de index automática), alta disponibilidade, flexível nível de consistência e replicação automática entre diferentes instâncias geograficamente espalhadas (cada uma permitindo leitura e escrita).
+
+Uma restrição atualmente é rodar somente em ambiente Windows, impedindo uma configuração automática de ambiente para o desenvolvedor se os demais containers da aplicação forem baseados em Linux (não é possível ter containers baseados em SOs diferentes rodando dentro de um mesmo Docker Engine). Uma forma de contornar esse problema é utilizar em desenvolvimento o MongoDB (API de cliente e instância de servidor), pois a API de cliente do MongoBD é compatível com o Azure Cosmos DB.
+
+> Banco de Dados e consistência
+Microsserviços possuem BD próprios, tendo soberania sobre seus dados, isto é, ninguém pode acessar seus dados de fora (somente ele acessa). 
+
+Em ambientes de produção, é recomendado que os BDs não estejam em container para melhorar performance. Porém, em desenvolvimento e stage, seria proveitoso, onde com apenas o comando de rodar o docker-compose todas as dependências para o desenvolvedor trabalhar estariam resolvidas, inclusive o BD, que poderia vir já com dados pré-carregados. Em stage, seria um ótimo cenário para rodar testes de integração, onde cada execução poderia ter a mesma massa de dados.
+
+Considerando como certo o cenário de um BD por microsserviço, haverá situações de duplicação de dados (ex: usuário), onde cada um possui um nível de detalhamento diferente (usuário precisa de login e operador precisa de função, embora tratem da mesma essência de informação). Essa duplicação de dados é importante para que possibilite ao microsserviço o mínimo de informação necessária para ser funcional e independente, mantendo sua operação alheio a interrupções de funcionamento de outros microsserviços. Porém, vale lembrar que esse dado redundante compartilha sua identificação única entre os diferentes microsserviços, respeitando a linguaguem Ubiqua (ID de usuário de João será 20 tanto no microsserviço atual como em outro, cuja representação é chamada de operador). 
+
+Ainda falando sobre a redundância de dados, sua sincronização deve ser feita via eventos (geralmente mensageria, mas podendo ser feito por rotinas agendadas) pelo próprio microsserviço. Com isso, não é possível garantir a atomicidade que BDs transacionais oferecem (begin tran/commit/rollback), já que microsserviços diferentes podem até utilizar BD NoSql (que não possuem esse recurso). Assim, é assumido a consistência eventual como opção padrão para microsserviços (por determinado tempo, os dados não serão consistentes), sendo implementado em conjunto técnicas como a de compensação de transação (desfazer manualmente uma primeira operação quando uma segunda dá erro).
+
+Também é necessário preocupar-se com a atomicidade entre os dados alterados pelo microsserviço e a mensagem do evento de integração (se o serviço de mensageria estiver fora deve ser desfeito o comando que alterou os dados anteriormente). Algumas abordagens são:
+- outbox pattern - é criado uma tabela (outbox) agindo como um evento de integração pendente junto com a tabela do processo, havendo controle transacional para garantir que tudo ocorra bem ou nada será feito. Depois, uma rotina agendada lê aquele dado pendente, coloca na fila da mensageria e atualiza o dado pendente para concluído.
+- transaction log mining - ferramenta de rotina automática acoplada ao transaction log de um BD que identifica alterações de dados e dispara uma publicação para a mensageria. 
+- event sourcing pattern - padrão de persistência de dados contendo apenas inclusão e armazenando apenas o que mudou (e não o estado atual do dado), permitindo saber como estava no passado determinado dado, além de permitir que seja desfeito facilmente a última operação armazenada (recurso muito útil para ser usado se houve falha na publicação do evento de integração). Essa é geralmente a abordagem recomendada, embora seja a mais complexa de utilizar, pois pode exigir uma remodelagem arquitetural, além de BD especializados em event sourcing, como Event Store ou orientados a documentos (como Azure Cosmos DB, MongoDB, Cassandra, etc).
+
+Uma abordagem mais balanceada seria uma mistura do padrão outbox e com um event sourcing simplificado, onde ao gravar em uma tabela de integração um dado alterado ele possui o status "pendente de publicação", e após publicação no message broker esse status mudaria para "publicado". No caso de falha na publicação, rotinas agendadas poderiam ficar tentando publicar o que ficou pendente. Outra alternativa é o processo principal não tratar a publicação no message broker, deixando essa responsabilidade para a rotina agendada.
+
+> Mensageria
+Existem 2 tipos de ferramentas de mensageria: 
+- low level - implementam o serviço de mensageria em si. São exemplos de ferramenta o RabbitMq e o Kafka.
+- high level - encapsulam um serviço de mensageria low level, porém, oferecendo soluções para diversos problemas, como recursos de retry, tratamento de DeadLetterQueue, etc. São exemplos de ferramenta o Azure Service BUS, o NServiceBus, o MassTransit ou o Brighter.
+
+> API Gateway
+Age como uma camada intermediando um cliente e os diferentes microsserviços (um proxy reverso, isto é, um roteador de requisições), possibilitando:
+- mudanças nos microsserviços sem afetar o cliente (como divisão ou fusão de microsserviços)
+- ser um ponto central de implementação de cross-cutting concerns, reduzindo esforço de desenvolvimento e duplicação de código em cada um dos microsserviços. Ex: autenticação, autorização, cache, políticas de retry, circuit breaker, log, trace, lista branca de IPs, etc)
+- compor dados de diferentes microsserviços, evitando que o cliente precise fazer múltiplas requisições ao backend, onde em um cenário do cliente acessando a internet para comunicar-se com microsserviços na nuvem teria sua performance menor do que fazer uma requisição só a uma API na nuvem e esta acessando vários microsserviços hospedados na mesma LAN, agrupando os dados para um único retorno
+- restringir dados dos microsserviços para fornecer ao cliente exatamente o que ele precisa (ex: mapear Models em ViewModels), diminuindo o tráfego de dados
+- diminuir a frequencia de quebras de contrato entre o cliente e o servidor, já que o contrato que o cliente possui é com a API Gateway, permitindo maior flexibilidade de mudanças nos microsserviços (que mais sofrerão alterações, já que são os detentores das regras de negócio)
+- aumentar a autonomia das equipes nos deploys, pois cada equipe teria seu API Gateway relacionado ao processo de negócio que são responsáveis, eliminando dependências de código entre equipes.
+
+Detalhando melhor a "composição de dados de diferentes microsserviços", isso deve ser feito sempre assincronamente (pois libera recursos enquanto aguarda a resposta), podendo inclusive ser fire-forget (não espera resposta). Esse processo é conhecido como orquestração para "commands" ou composição para "querys". Vale lembrar que orquestração deve sempre ser evitada, pois favorece a concentração de regras fora dos serviços de domínio. Recomenda-se no lugar utilizar coreografia, onde cada microsserviço publica e assina eventos em um "ServiceBUS/Mensageria".
+
+Quando vc especializa um API Gateway por tipo de cliente (um para mobile, outro para web, outro para desktop por ex.) ele passa a ser chamado de BFF (Backend por Frontend). Quando a aplicação crescer, uma próxima divisão lógica seria por área de negócio (compras, logística, etc), possibilitando especializar equipes por área de negócio.
+
+Alguns produtos com funcionalidades de um API Gateway: Azure API Management (Nuvem), Ocelot, Apigee, Kong, MuleSoft, WSO2, etc. Também agem como API Gateway mas oferecem recursos de service mesh o Linkerd e o Istio.
+
+Geralmente, ferramentas como Ocelot vão tratar apenas re-route (redirecionamentos de rotas), possuindo o recurso de transformar uma requisição em várias, retornando um JSON com o conteúdo de retorno de todas elas. Porém, esse recurso normalmente não é suficiente, precisando substituir o Ocelot por um Web API que irá efetuar essas múltiplas requisições aos microsserviços e agrupar os dados de retorno para uma única resposta ao cliente (serviço de agregação).
+
+Também é possível incorporar no Ocelot outras funções, como: service discovery, cache, log, circuit breakers/retry, rate limiting, etc.
+
+Alguns pontos de atenção no uso de API Gateway que devem ser tratadas com cuidado:
+- ponto único de falha.
+- gargalo para a performance das requisições.
+- gargalo de desenvolvimento, se mantido por um único time.
+- acoplamento com os microsserviços, podendo ser um novo e temível ESB (Enterprise Service Business).
+- camada geradora de custo de desenvolvimento adicional, caso possua muita lógica customizada.
+
+> Comunicação de microsserviços
+Não faça chamadas em cascata entre microsserviços (pior ainda, de forma síncrona), caso contrário, vc estará criando um monolito baseado em serviços, que sofrerá com baixa performance, falta de autonomia e baixa disponibilidade. A comunicação entre eles deve ser feita orientada a eventos (conhecida como coreografia), sendo normalmente implementada via mensageria.
+
+Cuidado com as falácias da computação distribuída quando sair do cenário de aplicações monolitas para distribuídas: a rede é segura, a latência é zero, a banda de rede é infinita, a rede é segura, topologia de rede não muda, existe apenas 1 admin na rede, o custo de transporte é zero e a rede é homogênea. Cada item possui várias abordagens para tratamento, mas de maneira geral é necessário isolar os microsserviços de negócio o máximo possível, tornando-os altamente coesos, utilizando comunicação assíncrona (aguarda a resposta do serviço desalocando a thread e alocando apenas quando chega a resposta), com formato de mensagens de nível mais alto e agrupando chamadas para uma única resposta ao cliente.
+
+A comunicação pode conter 1 ou + receptores (um ou vários assinantes para cada publicador). 
+
+Geralmente a comunicação do cliente para o servidor é via resquest/response (http/https com Rest e Json), sendo indicado para consultas em tempo real cujo tempo de resposta é pequeno (quando for grande é possível utilizar comunicação assíncrona, padrões de mensageria). A utilização de serviços rest http ainda possui a vantagem de utilizar metadados do Swagger para descrever suas APIs, servindo de documentação para o consumidor. Também é possível ter a comunicação feita com push notification (o servidor que chama o cliente, previamente inscrito naquele serviço) através de Asp.net SignalR.
+
+Para comunicação entre microsserviços (conhecido como eventos de integração) o padrão é fire-forget através de publicador/assinante. Havendo tratativas para problemas no meio de comunicação (como retry pattern) ou possuindo múltiplas instâncias de um mesmo serviço (devido escalabilidade horizontal), é preciso implementar idempotência nos serviços para garantir que um mesmo comando não duplique dados, caso haja falhas na rede que dispararam mecanismos de retry, etc. Uma forma de fazer isso é implementar verificações de Desduplicação (Deduplicating), onde deve ser criado um ID no evento e checar no assinante se aquele ID já foi processado, descartando aquela mensagem em caso positivo. Também existe o recurso de ferramentas de mensageria (como o RabbitMQ por ex) que atribui uma flag de reenvio na mensagem caso detecte que tentou enviar a mensagem ao assinante e não conseguiu, podendo então processar a lógica manual de desduplicação apenas quando essa flag de reenvio for true.
+
+> Eventos de Integração
+Forma de comunicação entre microsserviços, que segue:
+- o padrão observer, onde o observável notifica um ou mais observadores, tendo o primeiro que conhecer os demais.
+- o padrão publisher/subscriber (publicador/assinante), onde o publisher publica em um message broker uma mensagem, e o message broker disparará tal mensagem para todos os subscribers previamente registrados no message broker. Sua vantagem principal sobre o padrão observer é do publicador ser totalmente desacoplado dos assinantes, e vice-versa, agindo o message broker como um "middleman" (um serviço intermediando publicadores e assinantes). É por esse motivo que recomenda-se implementar EventBUS com pub/sub.
+
+O EventBUS utilizando pub/sub geralmente é composto por 2 partes: uma abstração/interface para ser usada pelos publicadores/assinantes, e sua implementação para ser usada como um serviço apartado (que pode inclusive ser "mockado" em ambiente de dev/stage). Detalhando a implementação temos:
+- microsserviços pub utilizando a abstração, injetando o EventBUS nas classes de serviço para efetuarem publicações e informando o evento que quer publicar (ex: ProductPriceChangedIntegrationEvent). Ver mais detalhes na página 138.
+- microsserviços subscribes também utilizando a abstração do EventBUS e injetando-o na sua classe de startup, para poder registrar suas assinaturas no EventBUS, determinando o evento que assina (ex: ProductPriceChangedIntegrationEvent) e a classe que será disparada quando houver publicações (ex: ProductPriceChangedIntegrationEventHandler). Ver mais detalhes na página 137. 
+- Já o message broker é hospedado como um serviço, armazenando todos os assinantes e disparando para eles as mensagens recebidas dos publicadores. Ver mais detalhes na página 136.
+
+Eventos de integração são definidos no nível de applicação pois são específicos daquele microsserviço, não sendo recomendado compartilhar bibliotecas comuns, o que poderia comprometer a autonomia do microsserviço devido a esse ponto único de falha, além de forçar a adoção da tecnologia do EventBUS nos microsserviços (se o EventBUS é feito em .net core, suas interfaces também serão, obrigando os microsserviços a serem .net core também para poder utilizá-las). Porém, vale lembrar que o cenário e estratégia da empresa pode ir contra a recomendação, caso haja justificativas coerentes (como por exemplo ter toda equipe especializada em c#, não havendo intenção em adotar no primeiro momento linguagens diferentes nos microsserviços).
+
+> Teorema CAP
+Esclarece que vc não pode ter um BD distribuído (como acontece com o cenário de microsserviços, onde cada um possui o seu) que está continuamente disponível, fortemente consistente (atomicidade de dados) e particionado para ter tolerancia a falhas. É preciso escolher 2 das 3 opções, sendo preferível sempre disponibilidade e particionamento, sacrificando atomicidade dos dados (dando lugar a consistência eventual).
+
+> Padrão SAGA
+Os eventos de integração entre microsserviços podem ocorrer através de mensagens com múltiplos estados, conhecido como "processos de longa duração", isto é, quando há 2 ou + chamadas de eventos co-relacionados, onde um evento  contêm mais de uma mensagem de entrada e cuja ordem de chegada possa ser diferente (devido a problemas de rede).
+
+SAGA é um padrão para tornar esses processos de longa duração mais tolerantes a falhas de comunicação, que se não tratados podem causar problemas de sincronismo entre os BDs dos microsserviços. 
+
+Sempre que uma mensagem de entrada correta acontece, uma instância da SAGA é iniciada. Caso seja uma mensagem de entrada cuja ordem esteja errada, a instância da SAGA não existirá e será lançado uma exception, confiando que o retry automático dispare novamente essa mensagem tempos depois, dando a oportunidade da mensagem correta instanciar a SAGA e permitir que a segunda mensagem ocorra e seja executada corretamente. Também é tratado pelo padrão SAGA idempotência das mensagens (o ato de ignorar uma segunda mensagem que foi erroneamente executada em duplicidade).
+
+As ferramentas de high level de mensageria possuem abstrações/interfaces para auxiliar na implementação do padrão SAGA (como o NServiceBus), podendo automaticamente persistir as mensagens em memória, disco ou em cache distribuído. 
+
+Recomenda-se que o evento receba mensagens contendo os dados necessários para processamento, evitando ter de consultar fontes externas, o que aumentaria o acoplamento com outros serviços e tempo de processamento.
+
+> Versionamento
+Microsserviços podem evoluir facilmente, uma vez que está sob controle do desenvolvedor. Porém, falar de evolução do API Gateway requer mais cuidado, pois elas podem causar breaking changes (seu contrato muda, causando incompatibilidade com o consumidor, que não temos controle sobre sua atualização). Por isso, é preciso em alguns momentos suportar diferentes versões de uma API. Algumas opções comuns são:
+- versionamento por rota (URI).
+- versionamento por query string.
+- versionamento por header.
+- versionamento por tipo de media.
+
+> Descoberta de microsserviços
+Microsserviços precisam ter uma URI de acesso que não se repete, pois novas instâncias podem ser criadas automaticamente durante um período de aumento de requisições (escalonamento). E o cliente precisa de uma forma de encontrar tais endereços. Para isso, é usado o padrão de registro de serviços (service registry), que pode ser feito de 2 formas:
+- self-registry - a criação de uma instância do microsserviço grava seu endereço de acesso em um repositório (service registry).
+- third-party registration - uma ferramenta de gerenciamento de serviços, que instancia um microsserviço e registra seu endereço no service registry.
+
+Tal endereço gravado no service registry é obtido através de uma consulta do cliente nesse serviço (serviço de descobrimento - service discovery). Isso pode acontecer de 2 formas:
+- client-side discovery - o cliente consulta diretamente o service discovery para obter o endereço do microsserviço (caso não exista API Gateway/BFF).
+- server-side discovery - o cliente consulta o API Gateway/BFF, que consulta o service discovery para obter o endereço de acesso do Microsserviço. 
+
+Exemplos de ferramenta de service registry/discovery são: Netflix Eureka e Apache ZooKeeper.
+
+> Documentação
+Swagger é uma biblioteca que implementa o OpenApi (versão atual 3.0), que é uma especificação criada por um grupo de empresas (como Microsoft, google, IBM, etc) com o objetivo de padronizar APIs Rest. Essa padronização facilita o consumo da API por parte do client, serve de documentação e ajuda a equalizar a implementação de características no server.
+
+Para gerar especificação, a implementação mais famosa do Swagger é a Swashbuckle, possuindo 3 produtos:
+- Swagger - o gerador da especificação, gravado em arquivo YAML or JSON.
+- SwaggerGen - um gerador de código client ou de teste seguindo a especificação da API.
+- SwaggerUI - um gerador de página que permite acionar os comandos da API de forma visual e simples.
+
+O asp.net core segue a especificação do OpenApi, logo, é possível inserir comportamentos na controller e suas actions que serão lidos e usados pelo Swagger. Ex: definir formato aceito de mensagens de entrada (application/json), http status code possíveis de retorno por action, descrição de actions e seus parâmetros de entrada via cabeçalho de método, etc.
+
+Utilizando tais recursos é possível documentar toda a API via código e ter sua documentação disponível em página web acessível pelo seu futuro consumidor, tendo todas as informações necessárias para construir a chamada do cliente.
+Também é possível gerar esse código do cliente automaticamente utilizando ferramentas como AutoRest, NSwag ou NSwagStudio, além de plugar o Swagger em ferramentas como o Microsoft Flow ou Microsoft PowerApps.
+
+
+> UI Composta de microsserviços
+É possível criar aplicações web onde cada segmento de página possui um componente que receberá o visual e comportamentos de tela de microsserviços.
+
+> Resiliência
+Um processo deve ter a capacidade de responder a falhas, sem que haja indisponibilidade, perda de dados e ou cause dados inconsistentes, além de gerar sempre informações de saúde (health checks) que alimentam um orquestrador de serviços para ser capaz de reagir a diferentes situações, como: 
+- ao detectar indisponibilidade de um container ser capaz de criar um novo e rotear as requisições para ele.
+- alocar novas instâncias para uma versão nova e rotear requisições aos poucos.
+- determinar durante um deploy ações de rollback de versão.
+
+Técnicas para tornar um processo resiliente incluem:
+- comunicação assíncrona ou baseada em mensageria.
+- retry policy (tentar novamente) - no caso de uma falha na requisição, ela deve ser reenviada novamente x vezes.
+- exponential backoff (desistência exponencial) - durante o retry da requisição, cada uma das tentativas terá um intervalor maior que o primeiro, sendo geralmente usado a expressão matemática de potência (também pode ser adicionado um valor randômico).
+- circuit breaker (quebrador de circuito) - quando muitas requisições falham (número configurável por requisição), um tipo de semáforo as interrompe e responde imediatamente com uma falha, deixando uma nova requisição tentar novamente a cada x tempos até que ocorra um sucesso, o que permitiria a liberação das demais requisições. 
+- timeout de requisições - evita que um cliente fique aguardando indefinidamente, alocando recursos infinitamente (afetando outros clientes).
+- oferecer fallback (reserva) - no caso da falha, retorna ao cliente uma informação de cache ao invés do erro.
+- limitar quantidade de requisições na fila - uma vez alcançado, um erro de limite de capacidade é prontamente disparado, podendo ser utilizado pelo orquestrador de containers para escalar horizontalmente aquele serviço. Essa abordagem é mais rápida que o circuit breaker, que só responderia quando houvesse um volume expressivo de falhas.
+- Bulkhead isolation (anteparo de isolamento) - limita quantidade de recursos que uma requisição pode alocar, evitando que o serviço pare por completo.
+
+Tais técnicas existem para que as múltiplas tentativas durante um estado de falha do serviço não causem um efeito semelhante a um ataque DoS (Denial of Service), tendo suas implementações disponíveis para .NET pelo NuGet package Polly.
+
+O EF Core possui configuração em seu startup para habilitar o retry policy para a conexão (comandos e consultas). Caso tenha tratamento manual da conexão com BeginTransaction em múltiplos contextos, é preciso trabalhar suas operações como delegates para funcionar (pg 288).
+
+> Resiliência em requisições HTTP
+A classe HttpClient do C# é disposable, mas instanciá-la por requisição dentro de uma cláusula using() em um fluxo intenso de chamadas é efetado por um bug onde internamente a ligação com o servidor não é interrompida, causando erros (https://aspnetmonsters.com/2016/08/2016-08-27-httpclientwrong/). 
+
+Uma forma de evitar esse problema é utilizar o HttpClientFactory. Existem várias formas de trabalhar com ele (direct, named clients, typed clients, generated clients). A mais estruturada é a typed clients, onde se cria uma classe para cada endpoint contendo sua configuração de URI, Headers e método para disparar a requisição (tratando inclusive seu retorno), e registrando tal classe via DI no startup através do AddHttpClient<ClasseCriada>, tendo sua utilização através dessa classe injetada no contrutor do cliente (Controller em uma aplicação MVC). Veja a implementação na pg 293.
+
+O HttpClientFactory pode plugar funcionalidades de resiliência através de handlers do Polly (pg 296).
+
+> HealthChecks (Informações de saúde)
+É a mecânica de reportar o estado atual de um microsserviço. eles podem ser de 2 tipos:
+- Liveness - operacional, capaz de aceitar requisições e responder (uma API com uma Action GET respondendo "OK" é suficiente).
+- Readiness - verifica se as dependências do microsserviço estão operacionais (BD, serviço de mensageria, etc).
+
+Recursos básicos de diagnóstico de aplicações web já vem embutidos no ASP.NET Core. Basicamente, é preciso:
+- configurar esse Middleware no DI (services.AddHealthChecks().AddCheck<ExampleHealthCheck>("example_health_check")).
+- criar uma classe que será acionada para verificar se aquele endpoint está Ok (no caso, a classe ExampleHealthCheck).
+- mapear um endpoint (endpoints.MapHealthChecks("/health")).
+
+Algumas funcionalidades adicionais são implementadas pelo NuGet package AspNetCore.Diagnostics.HealthChecks oferecendo vários middlewares para prover healthchecks em diversas ferramentas, como: Sql Server, Postgre, MongoDB, ElasticSearch, RabbitMq, Redis, etc. Outra ferramenta que é até mais completa (e open-source) é a Beat Pulse.
+
+> Watchdog
+É um serviço de monitoramento, que basicamente consulta os healthcheks de outros serviços. Ferramentas mais elaboradas permitem executar comandos manuais ou configurar ações automáticas de remediação para responder uma falha, assim como visualizar fluxos de eventos, performance, uso de recursos de hardware, disparar alertas e exibir gráficos.
+
+> Diagnósticos e eventos de log
+Existem 2 tipos de log: de informação (geralmente de 1 linha de dados) e de exceptions (com callstack e muitas outras informações). Por se tratar de um sistema distribuído, é preciso que os dados do log sejam levados para um local centralizado, porém, recomenda-se não fazer esse roteamento dentro do microsserviço, mas sim de forma transparente (outro processo seria responsável por isso). As 2 formas principais de fazer isso são:
+- In-Process Scenario - a aplicação chama o log, que efetua uma publicação da mensagem e e o assinante (um processo coletador) recupera essa mensagem e persiste. Essa abordagem é mais simples.
+- Out-Process Scenario - a aplicação chama o log, que escreve a mensagem no ETW (Event Tracing for Windows), que notifica um serviço de eventos, onde o assinante (um processo coletador) recupera essa mensagem e persiste. Essa abordagem permite que mesmo uma mensagem de crash da aplicação não será perdida.
+
+Algumas ferramentas de log são: Microsoft.Diagnostic.EventFlow e Splunk.
+
+> Testes
+Microsserviços devem possuir os seguintes tipos de testes:
+- Testes unitários: garantem que componentes individuais funcionem como esperado, mockando dependências quando existirem.
+- Testes de integração: garantem que a interação entre componentes funcionem como esperado, incluindo dependências externas como BD, I/O, log, etc. Não se usa mock aqui, pois o objetivo desse teste é ver se tais componentes funcionam conectados. Porém, para evitar sobrecargas de rede e diminuir o tempo de execução, utiliza-se no lugar de um servidor web (como o IIS) um web host de teste (para .net core existe o pacote NuGet Microsoft.AspNetCore.TestHost), mais leve e funcionando localmente no hardware que se roda os testes, uma vez que testes de integração tendem a ser lentos devido aos diversos recursos que possui dependencia.
+- Testes funcionais: garante que a aplicação funciona como esperado pela perspectiva do usuário.
+- Testes de serviço: garante que o caso de uso completo funcione, isto é, múltiplos microsserviços e suas integrações respondem como esperado. É preciso configurar o ambiente para esse tipo de teste, sendo usado por exemplo um docker-compose diferente que restaure um BD com dados na condição inicial para os testes).
+- Testes de carga: foca em tempos de resposta para cada microsserviço. O VS 2019 Enterprise possui esse recurso (outras ferramentas alternativas são: Apache JMeter, Akamai CloudTest e BlazeMeter).
+- Testes de stress: verifica o comportamento da aplicação em uma situação de uso intenso dos serviços com recursos de hardware limitados, compreendendo: uso de recursos, crashes de serviços e capacidade de recuperação, medição de quantidade de clientes simultâneos suportados, etc.
+
+> Tarefas de Segundo-Plano
+Backgroud tasks (tarefas de segundo-plano) e scheduled jobs (tarefas agendadas) na arquitetura de microsserviços são microsserviços/containers que serão hospedados juntamente com os microsserviços de negócio (deve fazer parte de um docker-compose), que rodam ciclicamente realizando diversas tarefas (ex: monitoramento, atualizações de dados), sendo executados como:
+- apps console ou process: baseados na interface IHost através do pacote NuGet Microsoft.Extensions.Hosting no .net core 2.1 ou superior, sendo bem leves.
+- web host: baseados na interface IWebHost, suportando recursos HTTP como MVC web app ou Web API service, utilizando o pacote NuGet Microsoft.AspNetCore.Hosting no .net core 2.0 ou inferior.
+
+Todas essas tarefas poderiam ser feitas como um programa customizado que nunca se encerra e executa tarefas criando threads, porém, utilizar as opções citadas anteriormente já constroi automaticamente uma estrutura de código preparada para realizar ações de limpeza ou encerramento seguro quando for necessário desligar o serviço.
+
+> Orquestração de Serviços
+Ter uma arquitetura de microsserviços implica em ter uma ferramenta de gerenciamento de instâncias, para controlar automaticamente o incremento de containers para balanceamento de carga, aumentar disponibilidade ou fazer deploy. As principais ferramentas são: Kubernetes e Azure Kubernetes Service (AKS).
+
+Tais ferramentas registram ambientes Docker (chamados de Node) de diferentes servidores e os conectam em um tipo de rede unificada para facilitar a administração dos containers. Tal administração é feita através da criação de um Master Node, que detém toda configuração do cluster (através de arquivos .yaml). Também existe uma ferramenta chamada Helm para mapear múltiplos serviços em um pacote que pode ser utilizado pelo Kubernates para facilitar a administração de múltiplos containers relacionados.
+
+> Ingress
+É um serviço que define um conjunto de regras para avaliar se aceita uma requisição de entrada, redirecionando para um ou mais API Gateways/BFFs caso seja aprovado. Quando usado Kubernates, o Nginx faz esse papel, expondo uma terminação para a URL de acesso, como:
+- "/" para clientes SPA.
+- "/webmvc" para clientes MVC.
+- "/webstatus" para status e healthchecks para clientes web app de monitoramento.
+- "/nomeBFF" para acesso ao BFF/API Gateway.
+
+O Nginx do Kubernates também pode controlar balanceamento de carga de tráfico, SSL e etc.
+
+> Recursos da Azure
+- Azure Kubernates Service - serviço do Kubernates na nuvem.
+- Azure Dev Spaces - conecta uma estação de trabalho de desenvolvimento a um ambiente com AKS, que pode ser isolado ou compartilhado (ambiente de dev/stage/prod).
+- Azure Service Fabric - suporta microsserviços rodando-os como processos simples ou como containers Docker.
+- Azure Key Vault - serviço de armazenamento seguro de segredos (senhas, connectionstrings, etc).
+
+> Padrão CQS / CQRS
+Command Query Separation (CQS) implica na filosofia de que métodos de um mesmo objeto ou retornam estado (consulta) ou mudam estado (comandos), mas não ambos. Command and Query Responsibility Segregation (CQRS) segue os principios do CQS de forma mais detalhada, promovendo: 
+- separação dessa responsabilidade em camadas (dlls) diferentes.
+- contextos de dados diferentes (permitindo flexibilidade nas consultas e consistências nos comandos).
+- mensageria assíncrona.
+- níveis de normalização diferentes se separado em BD ou objetos distintos (view materializadas).
+- casamento facilitado com event sourcing nos comandos.
+
+Funciona muito bem a abordagem de usar micro ORMs (como Dapper) para consultas (devido sua alta performance e simplicidade), retornando objetos específicos para o cliente (ViewModels). Inclusive, tais ViewModels podem ser classes comuns ou objetos dinâmicos (dynamic), que reduzem o trabalho de codificação e manutenção, porém, afetam de forma silenciosa a compatibilidade com o cliente e impossibilitam uma documentação mais detalhada para o Swagger (por isso não é a opção recomendada).
+
+A classe de Command é um DTO (Data Transfer Object) e ele é usado por uma clase CommandHandler, que é o responsável por utilizar tais dados para realizar uma operação de mudança de estado. Como são requisições, possuem nomes imperativos. Ex: CriarPedidoCommandHandler (que recebe nele um CriarPedidoCommand contendo apenas os dados necessários para concluir a operação).
+
+É importante frisar que Commands possuem apenas um CommandHandler (apenas um receptor), pois representa um fluxo da aplicação em cima de uma regra de negócio completa (como um aggregate root). De fato, utilizando DDD, o CommandHandler instancia (ou carrega do BD) o aggregate root, executa seu método e depois utiliza o mecanismo de persistência para concluir seu papel como um componente da camada de aplicação. Caso seja necessário envolver outro aggregate root, eventos de domínio devem ser usados. Command Handlers também publicam eventos de integração (assim como o repositório - pg 271).
+
+Recomenda-se que os Commands implementem idempotência sempre que for possível pela regra de negócio, assim como imutabilidade. Commands podem ser provenientes do client (vindo como parâmetros das Actions de Controllers), uma vez que não há muito valor em criar um tipo para o client e depois ter de transformá-lo em Command.
+
+O uso de Commands/CommandHandlers permite uma separação das regras do domínio com a mecânica de ligação dos componentes de infraestrutura (repositório, Web API, etc), permitindo que o modelo de domínio seja modificado sem afetar as demais partes do software, além de facilitar o uso de testes unitários. Quando um Command Handler se torna complexo, é um indício que os modelos de domínio precisam ser retrabalhados para absorver tais responsabilidades que estão no lugar errado ou que o domínio deveria ser segmentado.
+
+CommandHandlers poderiam ser invocados diretamente pelos controllers do projeto web, porém isso criaria acoplamento. O melhor é invocá-los:
+- usando o padrão Mediator em uma solução in-memory (para C# existe o NuGet package MediaR implementando essa estratégia).
+- usando mensageria assíncrona.
+
+Uma implementação interessante do padrão Mediator é o MediaR, porque:
+- associa de forma simples os Commands/CommandHandlers através do registro no container de DI dele, bastando informar o assembly das classes CommandHandler e o nome da interface que elas implementam. 
+- aborda funcionalidades de cross-cutting fazendo uso do padrão Decorator, onde tais funcionalidades uma vez configuradas serão disparadas automaticamente, tornando aquele código orientado a aspecto (AOP - Aspect Oriented Programming), sendo feita também no startup da aplicaçã dentro do container de DI do MediaR.
+- simplifica a implementação da idempotencia de comandos, onde ao invés de criar um command diretamente, basta criar um command wrapper (um envelope - um objeto que encapsula outro objeto) com um CommandHandler para ele que faz a verificação em algum repositório de que aquele ID (normalmente Guid) não existe, utilizando então o command "de negócio" armazenado dentro dele para ser capturado por um CommandHandler "de negócio" (pg 276).
+
+Mensageria assíncrona adiciona complexidade no sistema, então, seu uso é justificado em cenários específicos, como de alto volume de requisições de clientes, exigindo grande escalabilidade. E essa comunicação não pode ser fire-forget, pois é necessário notificar o requisitante do sucesso ou falha daquele comando (WebSockets por exemplo).
+
+Ambas as soluções devem se preocupar com cross-cutting concerns (preocupação transversal) como log, segurança, auditoria, etc.
+
+
+> Padrão Decorator
+Consiste em criar uma interface com assinaturas de comportamento, herdá-la em 2 classes: uma com a implementação de um comportamento padrão e outra abstrata que recebe um objeto do tipo da interface no construtor e o utiliza no método dele para executar via delegate aquele comportamento. A classe abstrata pode ter quantas classes filhas forem necessárias, tendo cada uma delas um comportamento diferente em seus métodos além de executar via delegate o comportamento do método injetado em seu contrutor. Dessa forma, pode ser juntado quantos comportamentos forem desejados apenas via contrução de objetos aninhados: 
+
+var configurandoComportamentos = new Comportamento1(new Comportamento2(new Comportamento3(new ComportamentoPadrão)));
+configurandoComportamentos.Executar();
+
+Mais informações em https://en.wikipedia.org/wiki/Decorator_pattern
+
+> Princípios do SOLID
+São técnicas críticas em sistemas orientados a objeto usadas para facilitar a compreensão, o desenvolvimento e a manutenção do software. São eles:
+Single responsibility principle - uma classe deve ter apenas uma responsabilidade.
+Open–closed principle - entidades de software devem ser fechadas para modificação, mas abertas para extensão.
+Liskov substitution principle - objetos devem ser substituíveis por instâncias de seus subtipos, sem afetar a funcionalidade do programa.
+Interface segregation principle - muitas interfaces de clientes especializadas são melhores do que uma para todos os propósitos (genérica).
+Dependency inversion principle - deve-se depender de abstrações, não de objetos concretos. Usa-se geralmente bibliotecas de injeção de dependência (DI) para instanciar objetos, como Autofac, Ninject, nativa do .net core, etc.
+
+O ASP.NET Core traz nativamente um container de DI (IServiceProvider) no método ConfigureServices da classe Startup de seu projeto web, porém, é possível utilizar outra biblioteca de DI (alguns como o Autofac possuem até mais recursos, como escanear assemblies para identificar automaticamente os mapeamentos de interface x classes de instância, com recursos de filtragem por nome, exceções, etc). Independente de qual seja o injetor de dependência, são disponibilizados 3 opções de instância:
+- transient - por dependência, isto é, será instanciado um novo objeto em cada necessidade de instância (se 2 classes diferentes tem dependência de um ILog, cada uma delas terá uma instância).
+- scoped - por requisição, isto é, será instanciado um objeto para cada requisição (se 2 classes diferentes tem dependência de um ILog, elas compartilharão a mesma instância dentro de uma requisição). Isso proporciona um melhor uso de recursos, sendo amplamente usado em classes stateless (que não guardam estado) como de serviço/BUS/Repository, não havendo consequencias negativas.
+- singleton - por runtime, isto é, uma única instância será criada e compartilhada para uso em toda aplicação.
+
+> Segurança
+É necessário restringir acesso aos serviços para usuários/clientes autenticados e o melhor lugar para fazer essa autenticação é no API Gateway/BFF, tornando-o único canal de acesso para o cliente (bloqueando acesso direto aos microsserviços). Se esse cenário não for possível, será necessário que cada microsserviço exija um token (ou cookie compartilhado) e o cliente deverá obtê-lo primeiro acessando um microsserviço autenticador (STS - Security Token Service). Uma implementação comum e rápida para isso é usar o ASP.NET CORE Identity (que também oferece o recurso de autorização).
+
+Fazendo uso do OAuth 2.0, é possível efetuar autenticação usando provedores externos como Google, Facebook, Microsoft ou Twitter, associando a conta autenticada com a conta do ASP.NET Core Identity através de middlewares respectivos, como por exemplo o Microsoft.AspNetCore.Authentication.Google (pg 310). Todo código necessário para fazer essa autenticação externa pode ser gerado automaticamente durante a criação de uma aplicação ASP.NET Core, através da opção "Authentication: Individual User Account" marcada.
+
+Uma alternativa ao uso de cookies compartilhados entre serviços é o "Bearer Token", uma chave eletrônica que confirma a identidade do portador, sendo usado pelo ASP.NET Core com autenticação OAuth 2.0 ou OpenID Connect também através de middlewares (um exemplo é o pacote NuGet Microsoft.AspNetCore.Authentication.OpenIdConnect para autenticar no Azure Active Directory.
+
+Existe a opção de usar o ASP.NET Core Identity com bearer tokens usando ferramentas como o IdentityServer4 e OpenIddict (mais detalhes na pg 313). Tokens podem ser baseados em Json (JWT - Jason Web Token), que contém 2 dados importantes: Audience (recurso pelo qual o token dá acesso) e Authority (endereço do serviço de autenticação que gera o token). Um middleware no microsserviço desejado utiliza os dados no token para obter roles (perfis de acesso permitidos), que serão validados por atributos decorando suas actions ou controllers (pg 314). Também é possível atrelar no JWT um certificado digital para aumentar o nível de segurança.
+
+O código gerado pelo ASP.NET CORE Identity já traz o recurso de autorização através do RoleManager (um gerenciador de roles), que persiste aquele perfil em um BD, permitindo ser associado a vários usuários (UserManager). Tal perfil que será testado pelos atributos das Actions/Controllers, usando comandos como [Authorize(Policy="Role")].
+
+> Gerenciamento de Segredos
+São chamados de segredos quaisquer informações sensíveis, como logins, senhas, connection strings, credenciais, etc, sendo uma boa prática não armazená-los no código-fonte nem no controle de versões, além de separá-los por ambiente (desenvolvimento, homologação, produção). 
+
+Em ambientes não-produção, é possível armazená-los:
+- em variáveis de ambiente - armazenados no startup project como appsettings.Development.json.
+- no ASP.NET Core Secret Manager - segue a mesma ideia das variáveis de ambiente, mas o arquivo Json é armazenado na pasta de perfil do usuário (variando de acordo com o sistema operacional). Para configurá-lo, é necessário adicionar a ferramenta DotNetCliToolReference, a referência ao Microsoft.Extensions.SecretManager.Tools, habilita-lo via comando "dotnet user-secrets init" para depois adicionar suas chaves via comando 'dotnet user-secrets set "Movies:ServiceApiKey" "12345"', sendo seus valores acessíveis da mesma forma que variáveis de ambiente (Configuration["Movies:ServiceApiKey"]).
+- no Azure Key Vault - disponível no pacote NuGet Microsoft.Extensions.Configuration.AzureKeyVault, é necessário registrar sua aplicação na Azure AD application, em seguida criar um novo "service principal" (via comandos no PowerShell), para finalmente registrar em sua aplicação a utilização do Azure Key Vault vai IConfigurationBuilder.AddAzureKeyVault no startup da sua aplicação (pg 320). 
+
+> Referencias adicionais:
+https://blog.couchbase.com/saga-pattern-implement-business-transactions-using-microservices-part/ (prefere o uso de orquestração ao invés de coreografia - ver inclusive parte 2 do artigo)
