@@ -17,3 +17,7 @@ dependencies:
     repository: https://kubernetes-charts.storage.googleapis.com
     version: 8.6.2
     alias: postgresql
+  - name: nginx-ingress
+    repository: https://kubernetes-charts.storage.googleapis.com
+    version: 1.34.2
+    alias: nginx-ingress

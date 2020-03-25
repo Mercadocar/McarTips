@@ -5,9 +5,9 @@ metadata:
   labels: 
     app: poc-telepreco-bff
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
-  - port: 80
+  - port: 11005
     targetPort: 80
   selector:
     app: poc-telepreco-bff

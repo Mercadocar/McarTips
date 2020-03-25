@@ -202,5 +202,12 @@ Each service above being a kubernetes service with a cluster-IP. The ingress is 
 This solves the problem of the front not knowing the service ip. The service ip is now a path of the same ip.
 Nginx-ingress is a helm chart and all configuration must be done inside the helm.
 Today I will implement this scheme. Due to its importance, it is a practice that will be used for all future k8 applications.
+Notes about above:
+    - Tutorial told me to create a new namespace to create my ingresses yaml. But how, since helm only manages apps inside
+    just one namespace (its a limitation). No problem let it create the resources inside the namespace helm choses (default?)
+    Good to notice, also, is that we can specify the namespace we want to install helm app. Add --namespace on the helm install
+    command. If the namespace doesnt exist, it creates one. Good to create test and dev apps, sharing the same cluster.
+    
+
 
  
