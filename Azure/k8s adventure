@@ -79,7 +79,7 @@ Before I dive into Helm, I must ensure I can make pods talks thought services wi
     they appear.
     I created Sac microservice on k8s and re-created bff. Also need to make sure what are those enviroment
     variables, so let´s find a command to check pod env. vars.
-    -> kubectl exec -it deploy-poc-telepreco-bff-867765bf6-xx6kr -- sh
+    -> kubectl exec -it deploy-poc-telepreco-bff-asterisk-bf547db95-87xrb -- sh
     Once entered in pod's bash:
     -> printenv
     And found the SAC envs:
@@ -186,5 +186,21 @@ For the attendance and budget microservices, that needs orcamento and atendiment
 created before they deploy, its important to create these microservices after all others.
 So they weight are the highest of all. Also I need to configure their docker to perform
 migrate in order to create the tables structure. Lets get into it?
+Changing subject a little: Service meshes is meant to work with microservice architecture
+other than event driven. Or so called: microservice that calls microservices. On Our architecture,
+services mesh will not work because of it event driven nature. We are researching more this field.
+So, back to the frontend problem:
+Problem: how to make a frontend app know the way to a kubernetes external service?
+it is worth remembering that it is not worth setting the ip in hand inside the front
+or picking up via var envs in the build time.
+Solution: a kubernetes application that has more than one external service is an anti-pattern. We should have
+just an external ip, served by an ingress scheme. nginx-ingress comes to the rescue. Stays like this:
+    <external-ip>/service1
+    <external-ip>/service2
+    <external-ip>/service3
+Each service above being a kubernetes service with a cluster-IP. The ingress is responsible for making the redirect.
+This solves the problem of the front not knowing the service ip. The service ip is now a path of the same ip.
+Nginx-ingress is a helm chart and all configuration must be done inside the helm.
+Today I will implement this scheme. Due to its importance, it is a practice that will be used for all future k8 applications.
 
  
