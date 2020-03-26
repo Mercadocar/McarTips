@@ -207,7 +207,13 @@ Notes about above:
     just one namespace (its a limitation). No problem let it create the resources inside the namespace helm choses (default?)
     Good to notice, also, is that we can specify the namespace we want to install helm app. Add --namespace on the helm install
     command. If the namespace doesnt exist, it creates one. Good to create test and dev apps, sharing the same cluster.
-    
+    - If we map /xxx into a service, the application understand xxx/something as just /something. In the bff, where we
+    use Swagger, the tool will try to connect to <ip>/swagger, but now ingress is <ip>/xxx/swagger. So it will not find the url and
+    will crash. We need to config swagger to connect to his own api considering the new relative path, so our controllers too.
+    - The frontend were mapped into /. But static files begins the url with `static`. We had to configure a new ingress object
+    solely for these static files. Ingress doesnt understand what is not explicit mapped.
+    - To map the service that deal with signalR (websockets), we got to set a row of new configs, and you can appreciate them
+    on the BffAsterisk.yaml.  The configs are quite self-explanable.
 
 
  

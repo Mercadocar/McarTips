@@ -8,7 +8,11 @@ spec:
   type: ClusterIP
   ports:
   - port: 11005
-    targetPort: 80
+    name: http1-port
+    targetPort: 5005
+  - port: 11006
+    name: http2-port
+    targetPort: 5006
   selector:
     app: poc-telepreco-bff-asterisk
   

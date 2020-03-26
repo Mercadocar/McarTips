@@ -1,7 +1,7 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: poc-telepreco-ingress
+  name: poc-telepreco-ingress1
   annotations:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
@@ -11,14 +11,10 @@ spec:
   - http:
       paths:
       - backend:
-          serviceName: poc-telepreco-frontend
-          servicePort: 11005
-        path: /(.*)
-      - backend:
-          serviceName: poc-telepreco-bff
+          serviceName: svc-poc-telepreco-bff
           servicePort: 11005
         path: /bff(/|$)(.*)
       - backend:
-          serviceName: poc-telepreco-bff-asterisk
+          serviceName: svc-poc-telepreco-frontend
           servicePort: 11005
-        path: /asterisk-bff(/|$)(.*)
+        path: /(/|$)(.*)
