@@ -214,6 +214,3 @@ Notes about above:
     solely for these static files. Ingress doesnt understand what is not explicit mapped.
     - To map the service that deal with signalR (websockets), we got to set a row of new configs, and you can appreciate them
     on the BffAsterisk.yaml.  The configs are quite self-explanable.
-
-
- 

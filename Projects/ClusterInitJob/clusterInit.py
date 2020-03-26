@@ -13,6 +13,8 @@ postgres_username = 'postgres'
 postgres_psw = 'postgres'
 postgres_host = os.environ['POC_TELEPRECO_POSTGRESQL_SERVICE_HOST']
 rabbitmq_host = os.environ['POC_TELEPRECO_RABBITMQ_SERVICE_HOST']
+db_1_name = 'atendimento'
+db_2_name = 'orcamento'
 
 # Create required RabbitMQ Queues and Exchanges.
 
@@ -42,9 +44,22 @@ con = psycopg2.connect(dbname='postgres',
 con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 cur = con.cursor()
 
-cur.execute(sql.SQL("CREATE DATABASE {}").format(
-    sql.Identifier('atendimento'))
-)
-cur.execute(sql.SQL("CREATE DATABASE {}").format(
-    sql.Identifier('orcamento'))
-)
+cur.execute("SELECT datname FROM pg_database;")
+
+list_database = cur.fetchall()
+
+if (db_1_name,) in list_database:
+    print("'{}' Database already exist".format(db_1_name))
+else:
+    print("'{}' Database not exist...Creating..".format(db_1_name))
+    cur.execute(sql.SQL("CREATE DATABASE {}").format(
+        sql.Identifier(db_1_name))
+    )
+
+if (db_2_name,) in list_database:
+    print("'{}' Database already exist".format(db_2_name))
+else:
+    print("'{}' Database not exist...Creating..".format(db_2_name))
+    cur.execute(sql.SQL("CREATE DATABASE {}").format(
+        sql.Identifier(db_2_name))
+    )
