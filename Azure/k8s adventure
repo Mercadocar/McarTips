@@ -15,6 +15,7 @@ I just created the k8s on azure. Let´s try to access it locally.
     az aks get-credentials --resource-group Arquitetura --name k8s-arquitetura
     "kubectl get nodes" to see if works
     Nice. Now we can control k8s on azure locally.
+
 Let´s try to deploy our Telepreço POC on k8s.
 Then I realised that our docker images are hosted on dockerhub (private ones)
 We need to let kubernetes know it and make it able to pull images from there.
@@ -34,6 +35,7 @@ So lets go:
     image: index.docker.io/rodoflho/mcarbabybfftelepreco:latest
 These commands were for private repos on docker hub, but when they are public
 just ignore and lets continue.
+
 Now, lets edit the yaml to make BFF work. Gonna list my struggle in order of happening:
     - API versions: v1, v1-beta, I dont know...some of them are not contemplating
     some keywords like deployment (in vase of v1) and NodePort.
@@ -65,19 +67,20 @@ Use just plain k8s will be painful, because each repository will require a pod a
 at minimum. Let´s study "Helm" to aggregate all deployments in just one config file.
     - Searching on the web, I realised that AKS is Helm Ready. I needed to install chocolatey in order to
     install Helm. I got Helm 3. It worked on our AKS cluster rightaway. So far so good.
+
 Ok...suppose I got a helm chart with all microservices...how could they talk to each other.
-Before I dive into Helm, I must ensure I can make pods talks thought services with plain k8s. Lets Go:
+Before I dive into Helm, I must ensure I can make pods talks throught services with plain k8s. Lets Go:
     - When we expose a service, we must program a way to discover the service ClusterIP dinamically inside
     each microservice (pod). How^?
     - If we create the service ClusterIP before the Pod, the Pod will get host ip and port for each
     registered services. I saw some examples on internet where when inside the pod using SSH, it curl
     the service using something like: curl http://$SERVICENAME_SERVICE_HOST:SERVICENAME_SERVICE_PORT.
-    Good, but how to access this values inside aspnetcore3 app?
-    Seems like just configuration.GetValue<string>("ExtraSettingNotInSettingsFile"); straight from:
+    - Good, but how to access this values inside aspnetcore3 app?
+    - Seems like just configuration.GetValue<string>("ExtraSettingNotInSettingsFile"); straight from:
     {SVCNAME}_SERVICE_HOST and {SVCNAME}_SERVICE_PORT
     Well, I need to ensure services are created first. In Yaml, the resources are created in the order
     they appear.
-    I created Sac microservice on k8s and re-created bff. Also need to make sure what are those enviroment
+    - I created Sac microservice on k8s and re-created bff. Also need to make sure what are those enviroment
     variables, so let´s find a command to check pod env. vars.
     -> kubectl exec -it deploy-poc-telepreco-bff-asterisk-bf547db95-87xrb -- sh
     Once entered in pod's bash:
@@ -85,21 +88,25 @@ Before I dive into Helm, I must ensure I can make pods talks thought services wi
     And found the SAC envs:
     SVC_POC_TELEPRECO_SAC_SERVICE_PORT
     SVC_POC_TELEPRECO_SAC_SERVICE_HOST
-    Lets put it on telepreco bff and see if it gets the host and IP.
+    - Lets put it on telepreco bff and see if it gets the host and IP.
     Modifies are on bff´s SacService, on ctor. Check it out. And lets test.
-    Worked!
-    I realised a problem here: In order to get the url to access a service, we
+    - Worked!
+    - I realised a problem here: In order to get the url to access a service, we
     need the service name, like SVC_POC_TELEPRECO_SAC. But what will happen if 
     the service name changes? Are we gonna change on code manually? The solution is
     Helm Templating. We are going to achieve this later.
     For now, let´s plug the other microservices... 
+
 Just installed spekt8 (https://github.com/spekt8/spekt8)
 To access: kubectl port-forward deployment/spekt8 3000:3000
 then http://localhost:3000. Trust me, localhost.
+This Tool is rubish...already deleted it.
+
 Nice, I plugged in the other microservices using Helm.
 Tested Helm Install, Upgrade, all working well.
 Let´s upgrade our chart to a chart umbrela, with each microservice
 a single chart, and each kubernetes object a yaml file.
+
 Helm Umbrella is working! Much more organized than before. Nice.
 Next step: plug a rabbitmq, mongodb and postgreSQl services.
 To install rabbit, seems that I need to add a repository in order to
@@ -117,10 +124,12 @@ When I did this, it generated a tgz file inside charts folder. After this,
 the habbitmq worked.
 To access rabbitmq:
     kubectl port-forward poc-telepreco-rabbitmq-0 7000:15672
-Cant Login. We must set rabbitmq login and pass. But where? I can see
+
+Cant Login into rabbitmq. We must set rabbitmq login and pass. But where? I can see
 a lot of examples using helm install, but not with chart as dependency.
 Solution: add a values.yaml with rabbitmq config (check file). I wrote
 down the credentials and worked. Needed to reinstall to make changes.
+
 Ahh...I would like to have pods with containers pulled when helm install,
 but unfortunately they are not re-created, so I need to uninstall every time.
 How to accomplish this? Dont know and its not important now.
@@ -129,6 +138,7 @@ Lets restart microservice-pessoa to check the name of the mongodbservice
     -> kubectl scale deployment deploy-poc-telepreco-pessoa --replicas=0
     -> kubectl scale deployment deploy-poc-telepreco-pessoa --replicas=1
     (just scale to zero, than to one again).
+
 Mongodb Working. It required auth from me, but I disabled it just to connect,
 on values.yaml again.
 Since mongodb is working on pessoa, lets try rabbitmq. It´s working nice.
@@ -142,24 +152,30 @@ Seems like this is not the right way to run dashboard, cos there is a AKS way to
     -> az aks browse --resource-group Arquitetura --name k8s-arquitetura
     -> kubectl create clusterrolebinding kubernetes-dashboard --clusterrole=cluster-admin --serviceaccount=kube-system:kubernetes-dashboard
 Voilá! Kubernetes Dashboard.
+
 I´m trying to move away from enviroment variables inside pods to the Core-Dns Solution. The coredns listens for services
 and exposes them like myservice.mydomain.com inside the cluster. Much better solution.
 Unfortunately, Helm will not help this. When I add the custom config, the helm complains that the object Already
-exists in the cluster, what is completely right: aks deploys a core-dns object by default. 
+exists in the cluster, what is completely right: aks deploys a core-dns object by default!
 Unfortunately, to configure the core-dns we need to use kubectl apply. This is a flaw in Helm and it´s not perfect
 as I was expecting, really a lame.
 So, Just to ensure: to configure cluster dns, forget helm. Do it straight in k8s.
 I lost 2 hours trying to make core-dns work. Gonna give up and keep using enviroment variables. Lets try again later.
+After many days I came back here to say that core-dns was always working on AKS, I just need to use the hostnames...
 The next plausible step is make sure all microservices are connected. On it.
+
 I´m so lazy...and deploy this is very tiring.
 Lets study some market products whom can help our setup. See:
     Istio (service mesh, hard to configure)
     Linkerd (service mesh too...but lightweight and promisses simplicity)
     Gloo (built on top of envoy)
     Kong
+See more below about why we declined the use of service meshes.
+    
 I developed a easy and centralized (on data-contracts) way to get services host and IP.
 You can check on ServiceDiscovery folder on MCarDataContracts and on gRPC services on bff.
 Lets test this new way? On Pessoa first.
+
 I just modified Bff to test pessoa. Built BFF and pushed to dockerhub. But, just a kubectl apply
 will cause the image to be pulled? Seems not because the pod wasnt restarted. So...
 The solution is: put imagePullPolicy: Always on Pod.yaml and image:latest. And because
@@ -169,6 +185,7 @@ PROBLEM: asterisk-microservice is not starting and causing incremental pod creat
      kubectl -n default delete pods --field-selector=status.phase=Failed
 Too many logs and many tries to connect to BFF. Lets delete it and connect them first.
 After some time out of this adventure, lets continue>
+
 We got a problem here: after a clear install, the rabbitmq lose its queues and exchanges.
 So we need to register them every time, but by hand? Surely not. Programatically yes.
 Kubernetes Jobs are pods that run a container and die, or run like a cron. We choose to run
@@ -178,6 +195,7 @@ of course, that run a python-alpine dist. It runs the script and done.
 The poc-telepreco top chart got only sub charts like an umbrella, but now it got a template.
 Its our job. But how make it run after the postgres and rabbit services are available? How
 to make sure? 
+
 Helm Hooks are the answer. Check the chart annotations. We can tell helm when this yaml will
 run and even define weights:
 Helm Hook Weights are read by helm by ascendent count. So hook 1 will happen before hook 2 
@@ -186,9 +204,11 @@ For the attendance and budget microservices, that needs orcamento and atendiment
 created before they deploy, its important to create these microservices after all others.
 So they weight are the highest of all. Also I need to configure their docker to perform
 migrate in order to create the tables structure. Lets get into it?
+
 Changing subject a little: Service meshes is meant to work with microservice architecture
 other than event driven. Or so called: microservice that calls microservices. On Our architecture,
 services mesh will not work because of it event driven nature. We are researching more this field.
+
 So, back to the frontend problem:
 Problem: how to make a frontend app know the way to a kubernetes external service?
 it is worth remembering that it is not worth setting the ip in hand inside the front
@@ -214,3 +234,37 @@ Notes about above:
     solely for these static files. Ingress doesnt understand what is not explicit mapped.
     - To map the service that deal with signalR (websockets), we got to set a row of new configs, and you can appreciate them
     on the BffAsterisk.yaml.  The configs are quite self-explanable.
+
+Well. So good so far, my friend. Helm Project seems to be well functioning. We managed to achieve lift and ship.
+There is one thing that we should achieve by all means necessary: tracing. Here why:
+It's concept must be well defined, with sample tests, because tracing can't be implemented later after the
+production stage is ready. We would need tracing abilities a lot to find and fix errors. Observability is one
+core concept in microservices and without it we are in the dark.
+So, continuing and bringing forth more infos: Unlike service meshes, where tracing is done in a layer above the
+application (in this case the infrastructure topology, where proxies are put as a sidecarts to every machine,
+to intercept calls and log them into the server to compose metrics), we are aiming a trace strategy solely generated
+in application layer, that is, done inside our microservices code. We need this because we have a Event Based
+architecture, where messages often goes as Integration Events on MQs. So, let me present the OpenTracing specification:
+
+The OpenTracing specification: A tool agnostic way to tracing. Write using this standard and you can use any
+tools OpenTracing compatible, being capable to change with no pain. This is very extensible and we can compare
+to HTTP. We use HTTP for req/res and we can change from apache to nginx.
+Traces in OpenTracing are defined by an atomic concept: a span. A trace is a graph of spans, not cyclic, where
+the edges of the spans are called references.
+
+Each Span encapsulates the following state:
+    An operation name
+    A start timestamp
+    A finish timestamp
+    A set of zero or more key:value Span Tags. The keys must be strings. The values may be strings, bools, or numeric types.
+    A set of zero or more Span Logs, each of which is itself a key:value map paired with a timestamp.
+        The keys must be strings, though the values may be of any type. Not all OpenTracing implementations must support every value type.
+    A SpanContext
+    References to zero or more causally-related Spans (via the SpanContext of those related Spans)
+
+A span can reference zero or more other spancontexts. This relationship can be of ChildOf or FollowFrom.
+    ChildOf: a span that depends on another. When I say depends, means that it expects response.
+    For example: when a BFF calls Cliente using gRPC:
+        Cliente side is ChildOf BFF side
+    FollowFrom: a child span that doesnt depends in any way of parent span. This is interesting for our
+    Fire and Forget kind of operation (MQs)
