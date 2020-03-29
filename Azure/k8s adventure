@@ -268,3 +268,28 @@ A span can reference zero or more other spancontexts. This relationship can be o
         Cliente side is ChildOf BFF side
     FollowFrom: a child span that doesnt depends in any way of parent span. This is interesting for our
     Fire and Forget kind of operation (MQs)
+Keywords from Jaeger:
+    Agent – A network daemon that listens for spans sent over User Datagram Protocol.
+    Client – The component that implements the OpenTracing API for distributed tracing.
+    Collector – The component that receives spans and adds them into a queue to be processed.
+    Console – A UI that enables users to visualize their distributed tracing data.
+    Query – A service that fetches traces from storage.
+    Span – The logical unit of work in Jaeger, which includes the name, starting time and duration of the operation.
+    Trace – The way Jaeger presents execution requests. A trace is composed of at least one span.
+Just to record a possible Observability stack for our architecute:
+A basic level of Observability:
+    Elasticsearch-operator -> Tool to store and search for logs (and also maybe tracing)
+    Jaeger-operator -> Tracing tool that uses OpenTracing standard
+    Prometheus-operator -> systems and service monitoring system. It collects metrics from
+        configured targets at given intervals, evaluates rule expressions, displays the results, and can trigger alerts if some condition is observed to be true.
+    Weavescope -> Weave Scope automatically detects processes, containers, hosts.
+    Fluent-bit -> Log Processor and Forwarder which allows you to collect data/logs from different sources
+    Kibana -> Visualize Elasticsearch Data
+    Grafana -> Monitoring Tool: its focus on data visualization.
+So, how Observability would work here:
+Following the three pilars of Observability, we got:
+    Tracing: OpenTracing Jarger
+    Logging: Fluent-Bit, that sends logs and metrics from microservices to
+        Elasticsearch, which we can visualize using kibana and prometeus
+    Metrics: Wavescope for infrastructure, Prometeus for Events
+        and alerts and grafana for all purpose monitoring.
