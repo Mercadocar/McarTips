@@ -275,6 +275,7 @@ Keywords from Jaeger:
     Console – A UI that enables users to visualize their distributed tracing data.
     Query – A service that fetches traces from storage.
     Span – The logical unit of work in Jaeger, which includes the name, starting time and duration of the operation.
+        Contains much more...
     Trace – The way Jaeger presents execution requests. A trace is composed of at least one span.
 Just to record a possible Observability stack for our architecute:
 A basic level of Observability:
@@ -293,3 +294,18 @@ Following the three pilars of Observability, we got:
         Elasticsearch, which we can visualize using kibana and prometeus
     Metrics: Wavescope for infrastructure, Prometeus for Events
         and alerts and grafana for all purpose monitoring.
+
+I'm researching some author/authent, So I will leave here some gathering:
+    RBAC (Role-Based Access Control)
+        - Requisities:
+            Must contain helm integration.
+            Complete and mature set of authorization patterns.
+            Easy integration to IdentityManagement
+
+    Identity Management
+        - Requisities:
+            Must contain helm integration.
+            Must integrate to AD.
+            Easy integration to RBAC
+
+So, the choice here is KeyCloak
