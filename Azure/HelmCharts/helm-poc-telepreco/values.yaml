@@ -7,7 +7,7 @@ mongodb:
 postgresql:
   postgresqlPassword: postgres
 nginx-ingress:
-  controller.replicaCount: 2
+  controller.replicaCount: 5
   controller.nodeSelector."beta\.kubernetes\.io/os": linux
   defaultBackend.nodeSelector."beta\.kubernetes\.io/os": linux
-  
+appBffLabel: poc-telepreco-bff

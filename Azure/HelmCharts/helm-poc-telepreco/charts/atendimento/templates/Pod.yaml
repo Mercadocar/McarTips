@@ -1,15 +1,15 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: deploy-poc-telepreco-atendimento
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-deploy
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
   template:
     metadata:
       labels:
-        app: poc-telepreco-bff-atendimento
+        app: {{ .Values.appBffsLabel }}-{{ .Chart.Name }}
     spec:
       containers:
-      - name: mcarmicroserviceattendance
-        image: rodoflho/mcarmicroserviceattendance:latest
+      - name: {{ .Values.image.name }}
+        image: {{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
         imagePullPolicy: Always

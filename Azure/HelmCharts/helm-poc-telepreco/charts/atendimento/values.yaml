@@ -1,0 +1,5 @@
+image:
+    repository: brunobck
+    name: mcarmicroserviceattendance
+    tag: "latest"
+replicaCount: 1
