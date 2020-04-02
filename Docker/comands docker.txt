@@ -44,3 +44,13 @@ docker pull rodoflho/mcarauthenticationapi:latest
 >> Para listar todos os containers
 docker ps -as
 sudo docker ps
+
+>> Azure Container Registry
+Ao invés de logar no Docker Hub, é preciso logar no ACR
+az acr login -n McarImageRegistry
+
+Utilize o endereço criado para a Mcar quando necessário
+mcarimageregistry.azurecr.io (preferencialmente utilizar como prefixo do nome da imagem, como mcarimageregistry.azurecr.io/microservice-orcamento:latest)
+
+E a senha abaixo
+k1VjmiZ32IPgUDPNpeVMogc+=T78D/8u
