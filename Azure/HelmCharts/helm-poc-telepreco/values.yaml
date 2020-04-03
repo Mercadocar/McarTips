@@ -10,4 +10,6 @@ nginx-ingress:
   controller.replicaCount: 5
   controller.nodeSelector."beta\.kubernetes\.io/os": linux
   defaultBackend.nodeSelector."beta\.kubernetes\.io/os": linux
-appBffLabel: poc-telepreco-bff
+poc-telepreco-atendimento:
+  appBffLabel: poc-telepreco-bff
+  repository: mcarimageregistry.azurecr.io

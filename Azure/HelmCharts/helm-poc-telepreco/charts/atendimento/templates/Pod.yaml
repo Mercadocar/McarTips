@@ -1,15 +1,15 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-{{ .Chart.Name }}-deploy
+  name: deploy-{{ .Release.Name }}-{{ .Values.label.name }}
 spec:
   replicas: {{ .Values.replicaCount }}
   template:
     metadata:
       labels:
-        app: {{ .Values.appBffsLabel }}-{{ .Chart.Name }}
+        app: {{ .Values.appBffLabel }}-{{ .Values.label.name }}
     spec:
       containers:
       - name: {{ .Values.image.name }}
-        image: {{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+        image: {{ .Values.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
         imagePullPolicy: Always
