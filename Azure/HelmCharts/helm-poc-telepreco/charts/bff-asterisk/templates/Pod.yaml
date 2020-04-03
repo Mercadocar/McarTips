@@ -12,5 +12,5 @@ spec:
     spec:
       containers:
       - name: mcarbabybffteleprecoasterisk
-        image: rodoflho/mcarbabybffteleprecoasterisk:latest
+        image: mcarimageregistry.azurecr.io/baby-bff-telepreco-asterisk:latest
         imagePullPolicy: Always

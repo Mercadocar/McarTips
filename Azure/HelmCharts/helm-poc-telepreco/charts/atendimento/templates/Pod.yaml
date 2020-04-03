@@ -11,5 +11,5 @@ spec:
     spec:
       containers:
       - name: mcarmicroserviceattendance
-        image: rodoflho/mcarmicroserviceattendance:latest
+        image: mcarimageregistry.azurecr.io/microservice-atendimento:2.1
         imagePullPolicy: Always

@@ -18,5 +18,5 @@ spec:
     spec:
       containers:
       - name: jobclusterinit
-        image: rodoflho/mcarmicroserviceclusterinitjob:latest
+        image: mcarimageregistry.azurecr.io/cluster-initjob:latest
       restartPolicy: OnFailure

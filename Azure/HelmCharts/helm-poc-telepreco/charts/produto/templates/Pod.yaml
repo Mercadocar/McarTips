@@ -11,5 +11,5 @@ spec:
     spec:
       containers:
       - name: mcarbabymicroserviceproduto
-        image: rodoflho/mcarbabymicroserviceproduto:latest
+        image: mcarimageregistry.azurecr.io/baby-microservice-produto:latest
         imagePullPolicy: Always

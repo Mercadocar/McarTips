@@ -11,5 +11,5 @@ spec:
     spec:
       containers:
       - name: mcarbabymicroserviceasterisk
-        image: rodoflho/mcarbabyasterisk:latest
+        image: mcarimageregistry.azurecr.io/baby-microservice-asterisk:latest
         imagePullPolicy: Always

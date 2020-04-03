@@ -11,5 +11,5 @@ spec:
     spec:
       containers:
       - name: mcarmicroserviceorcamento
-        image: rodoflho/mcarmicroserviceorcamento:latest
+        image: mcarimageregistry.azurecr.io/microservice-orcamento:latest
         imagePullPolicy: Always

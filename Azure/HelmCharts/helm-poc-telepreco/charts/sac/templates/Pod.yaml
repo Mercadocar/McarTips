@@ -11,5 +11,5 @@ spec:
     spec:
       containers:
       - name: mcarbabymicroservicesac
-        image: rodoflho/mcarbabymicroservicesac:latest
+        image: mcarimageregistry.azurecr.io/baby-microservice-sac:latest
         imagePullPolicy: Always
