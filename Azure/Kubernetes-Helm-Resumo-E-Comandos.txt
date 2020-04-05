@@ -1,0 +1,295 @@
+Notas do curso de introdução a Kubernetes do pluralsight
+
+Kubernetes (abreviado como K8s) é um basicamente um orquestrador de microserviços rodando em containers. Ele funciona apenas no Linux e é composto por:
+- Pods - Pod é um ambiente para execução de um ou mais containers (que são serviços).
+- Nodes (conhecidos como minions tb) - são hosts configurados para gerenciar Pods.
+- Masters - são containers controladores de um grupo de Nodes, isto é, são responsáveis por fazer monitoramento, agendamento, respondem a eventos, efetuam mudanças nos Nodes, etc. 
+- Cluster é um conjunto de Nodes e Master (é um ambiente K8s).
+- Manifest - é um arquivo YAML (se fala iámol fáil) que se configura no Master e ele se encarrega de criar Nodes pelo Cluster. Esse arquivo YAML (também pode ser JSON) segue o esquema declarativo, isto é, descrevemos como queremos o ambiente configurado (o estado desejado), e o Kubernetes que decide como fazer para atingir esse objetivo.
+- Replication Controller - recebe um manifest de instruções imperativas (uma sequencia de comandos explícitos) que vai manipular os Pods no Cluster (sua quantidade, Labels, etc). Ele é o gerenciador de Pods nos Nodes.
+- Replica Sets - é semelhante a um manifest que um Replication Controller recebe, porém, é gerado por um Deployment e após executado (pelo Replication Controller) é armazenado permanentemente, podendo ser usado novamente (pelo Deployment) quando for solicitado rollback.
+- Deployment - um recurso para receber uma manifest contendo instruções declarativas, isto é, avaliam o estado do cluster e disparam comandos (para os Replica Sets) até atingir o estado desejado pela configuração. É ele o responsável por fazer uma atualização ou rollback de uma aplicação.
+
+Em resumo, Master recebe arquivos de manifestos, que identificam o estado atual do cluster K8s e disparam comandos para atingir esse estado desejado, enviando-os para Nodes, hosts previamente registrados no cluster K8s e que criam pods para delegar tais tarefas de uma forma balanceada em seus múltiplos containers que o compõem. 
+
+O Master é dividido em vários componentes:
+- kube-apiserver - é um frontend para interagir com o Master, expondo um API Rest (porta padrão 443) que consome JSON.
+- cluster-store - é o mecanismo de persistência do Master, que utiliza o etcd (um BD Distribuido NoSql de Chave-Valor). É essencial ter backup dele.
+- kube-controller-manager - observa estado para mudanças e ajuda a manter o estado desejado. É composto por múltiplos controllers, como: Node Controller, Endpoints Controller, Namespace Controller, etc.
+- kube-scheduler - observa apiserver para novos pods e atribui tarefas para Nodes (affinity, anti-affinity, constraints, resources, etc).
+
+Comandos são criados através do utilitário kubectl, que interage com o apiserver (via JSON), encaminhando para os demais componentes, onde isso resulta no scheduler disparar ações nos Nodes.
+
+O Node é dividido em 3 componentes:
+- kubelet - é um agente do K8b instalado no Linux, que registra aquele host como um node no cluster K8s, passando a observar o apiserver no Master esperando por tarefas, que quando recebidas, criam pods para executá-las e passam a dar feedback ao Master (healthChecks). O kubelet oferece endpoints na porta padrão 10255, como: /spec para informações do Node, /healthz para healthcheks, /pods para pods em execução, etc.
+- container runtime - é que fará o gerenciamento de containers (sendo normalmente plugado ao Docker Engine, mas há outros), baixando images e criando/parando containers.
+- kube-proxy - é o gerenciador de redes do Node, que cria um IP para cada um dos pods, e o compartilha para todos os seus containers (a identificação única de cada container é sua porta). O kube-proxy também é responsável por fazer balanceamento de carga entre os pods de um serviço, isto é, para o cliente existe apenas um IP para o serviço, sendo oculto então ao cliente os IPs de cada pod que formam o serviço.
+
+Um Pod compartilha seu ambiente (rede, memória, namespace, volumes) com quantos containers possuir. Porém, ele é a unidade atômica do K8s, isto é, um Pod sobe com todos os containers ou não sobe. Quando o K8s precisa escalar um serviço, ele cria um novo Pod (e não um container a mais dentro de um Pod sobrecarregado).
+
+Pods não tem um ciclo de vida duradouro (que estão funcionando e quando param precisam ser reparados). Eles são criados, funcionam enquanto for possível, e quando param são destruídos e novos são criados no lugar. Portanto, não espere que o estado de seu serviço seja recuperável (armazene estado em serviços específicos para isso). Os Pods possuem os seguintes status: Pending (quando um apiserver dispara a criação de um Pod e sua imagem está sendo baixada e iniciada), Running (está rodando, disponível para utilização), Succeeded (foi desligada) e Failed (durante o status Pending ocorreu uma falha que impossibilitou de iniciar).
+
+Clientes não podem referenciar IPs dos Pods (já que eles mudam), mas sim de IP expostos via Service, um objeto do K8s com IP e DNS fixos que conhece os Pods e roteiam as requisições dos clientes para os Pods. Na verdade, quando é criado um Service, é criado junto um Endpoint para o ele e outro Endpoint para cada Pod configurado para aquele Service, ficando então os Pods com a mesma porta que seu Service associado.
+
+Um Service possui o campo "spec: type: " contendo 3 tipos:
+- ClusterIP - sua aplicação somente é acessível dentro do cluster do K8s, isto é, somente será acessada por outra aplicação hospedada naquele K8s. Isso pode ser usado para inibir o acesso externo à um microserviço, onde quem tem de acessá-lo é uma aplicação BFF, que será hospedada no mesmo cluster do K8s (esse sim precisa ter acesso externo e não usará essa opção "ClusterIP".
+- NodePort - publica uma porta fixa, permitindo acessibilidade externa via IP do cluster do K8s + essa porta, podendo ser obtida pelo comando "minikube service <NOME> --url" caso seja um cluster do minikube.
+- LoadBalancer - permite acessibilidade externa via recurso do provedor de cloud (AWS, Azure, etc), onde haverá um IP público para acessar a aplicação. Ao inspecionar o serviço, esse IP aparece como External-IP
+
+Quando for utilizado um provedor cloud e utilizado a opção LoadBalancer, para acessar a aplicação utilize: http://External-IP/App-name onde External-IP é obtido pelo comando "kubectl get svc --namespace nome-namespace" e App-name em uma aplicação ASP.NET CORE "containerizada" é o final da "launchUrl" no arquivo launchSettings.json do perfil Docker (a parte do ServiceHost e ServicePort não é usada pois é determinada pelo K8s).
+
+Service Discovery é essa mecânica em que os Services "descobrem" Pods, funcionando através de Labels, onde o Service possui alguns, os Pods também. Quando novos Pods são criados e seus Labels são iguais a de um o Service, aquele Service passa a considerar que aqueles Pods estão sob seu domínio, criando um endpoint para ele (por padrão via DNS, mas existe também via variáveis de ambiente) e passando a encaminhar requisições.
+
+O processo de deploy também utiliza os Labels. No cenário onde um Service e Pods possuem os Labels "Produção", "Serviço 1" e "Versão 1.3", quando se inicia o deploy, o Label "Versão 1.3" é removido do Service, continuando a rotear para os Pods existentes. Novos Pods são criados com o Label "Versão 1.4" e passam a ser utilizados pelo Service. Finalmente, basta adicionar novo Label "Versão 1.4" ao Service para ele parar de encaminhar requisições aos Pods com a versão anterior.
+
+Também é importante mencionar que são os Services que fazem o balanceamento de carga. 
+
+O gerenciamento do ambiente K8s é muito facilitado pelo recurso do Deployment, pois ele possibilita: 
+- que o Manifest seja uma documentação dos serviços que compõem aquela aplicação, seu uso de recursos, sua configuração de balanceamento de carga e redundância.
+- monitoramento de ambiente e resposta automática para falhas.
+- versionar facilmente os serviços.
+- refazer facilmente deploys em outros ambientes.
+- atualizações contínuas com zero indisponibilidade de maneira simples, permitindo adoção de estratégias de deploy Blue/Green ou Canary.
+- facilidade para rollback de versões.
+
+Estratégias de deploy:
+- Blue/Green - consiste em duplicar sua aplicação, onde a nova cópia possui a nova versão, e seu proxy reverso passa a encaminhar as novas requisições para ela apenas quando a nova versão estiver pronta (as requisições em andamento na versão antiga podem terminar naturalmente). Essa estratégia permite um deploy com zero indisponibilidade, porém, vc precisa do dobro de recursos de hardware que usa atualmente (pelo menos durante o deploy).
+- Canary - apenas um percentual das requisições são encaminhadas para a nova versão, e esse percentual é incrementado com o tempo (e a ausência de falhas detectadas). Em ambientes com balanceamento de carga, apenas uma nova instância é criada com a versão nova para receber as requisições inicialmente, substituindo aos poucos as instãncias das versões antigas pelas novas. Quando não há balanceamento de carga, haveria a mesma necessidade de recursos de hardware (duplicação) que a estratégia Blue/Green.
+- A/B Testing - consiste em monitorar dados referentes às funcionalidades de software que sofreram alteração entre a versão nova e a anterior, sendo usado em conjunto com as outras estratégias de deploy. Isso permite identificar precocemente impactos da versão nova, apressando a tomada de decisão de voltar a versão. Um exemplo seria a qtde de vendas cair em um intervalo de tempo apenas na versão nova, o que poderia indicar que o serviço é tão mais lento que impactou na operação.
+
+> Instalação do Minikube no Windows (Mini-Kubernetes para ambiente de desenvolvimento)
+- Instalar kubectl e registrá-lo nas variáveis de ambiente do Windows.
+- Habilitar Hypervisor no Windows 8 ou superior (Docker Desktop faz isso automaticamente na inicialização). Talvez seja necessário em um console admin rodar o comando: Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V
+- Iniciar o Minikube com o comando: minikube start
+- Testar com o comando: kubectl get nodes
+
+> Instalação do Kubernetes On-Premise
+Todo Master e Node precise ter instalado:
+- Docker Container Runtime
+- Kubelet - agente do Node.
+- Kubeadm - ferramenta para construir o cluster.
+- Kubectl - ferramenta de client.
+- CNI - configura a rede dos containers
+
+Após instalar tudo, é necessário efetuar uma série de ações e comandos, que não serão listados aqui pois o curso é de uma versão de 3 anos atrás do Kubernetes e muita coisa pode ter sido alterada, mas será listado os passos de uma forma genérica apenas para entendimento:
+- executar o comando "kubeadm init"
+- copiar o arquivo admin.conf do Kubernetes para o perfil do usuário e conceder acesso a ele. 
+- criar uma variável de ambiente para ele.
+- usar um arquivo para configurar o ambiente de rede para o cluster, através do comando: kubectl apply --filename https://git.io/weave-kube-1.6
+- adicionar outros Nodes via comando: kubeadm join --token <GUID_OBTIDO_DURANTE_INSTALACAO_PRIMEIRO_NODE> IP:Porta (do primeiro Node).
+
+> Manifest (YAML/JSON)
+Kind - indica qual tipo de objeto do K8s será configurado, como Pod, Replication Controller, Service Deployment, etc.
+Metadata - determina as configurações do Kind, como name, labels, etc. Cada configuração pode ter sub-grupos, expandindo a hierarquia nas configurações, semelhante a um JSON comum.
+Spec - determina outro tipo de configuração para o Kind, como qtde de containers, as imagens em cada um deles, as portas, replicas, etc
+
+>>>>>>>>>>>>>>>>>>>>>>>>HELM<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+Para cada atualização de uma aplicação, uma série de arquivos yaml devem ser disparados via kubectl para que o cluster do K8s faça tais alterações. E pior: será necessário executá-los na ordem correta para funcionar.
+
+Para melhorar esse cenário, é possível empacotar os arquivos yaml em um Chart, enviá-lo ao Helm (um console client), que os enviará (via Grpc) a um componente adicional do K8s chamado Tiller, que envia os comandos para o K8s fazer as alterações (além de guardar histórico deles no ConfigMap).
+
+O Helm possui:
+- Charts - é um conjunto de definições dos objetos do K8s que fazem parte de uma aplicação. 
+- Templates - permitem reuso dos charts
+- Dependecies
+- Repositories
+
+Uma configuração importante para fazer no Tiller é criar uma conta de serviço com permissão restrita a um namespace específico, pois por padrão o Tiller vem com permissão admin do cluster, o que em produção é uma vulnerabilidade grande. Outra configuração é utilizar certificado SSL para comunicação entre o Helm (cliente) e o Tiller (servidor).
+
+Alternativas para essa preocupação de segurança no Tiller:
+- instalá-lo no client, deixando que ele se comunique com o K8s (que possui seus recursos de segurança). Vale lembrar que o ConfigMap continua no servidor, mantendo centralizado as configurações do Helm e histórico.
+- utilizar o Helm 3, que aboliu o Tiller
+
+Helm-Chart é como um diretório compactado, onde possui uma série de arquivos e diretórios:
+- Chart.yaml - contém metadados do chart em si, como nome, versão do aplicativo, versão do próprio chart, etc.
+- templates - diretório com os arquivos .yaml de cada um dos Kinds a serem executados no K8s, como Deployment, Service, Ingress, etc.
+
+Adicionalmente, caso seja necessário dividar a aplicação em serviços "liberáveis", é possível criar diversos diretórios no mesmo nível do Chart.yaml, como como backend, frontend, database, etc., onde cada um deles terá seu Chart.yaml e a pasta templates contendo todos os arquivos yaml de objetos K8s.
+
+A instalação de um Chart no K8s é um release da sua aplicação (nada mais é que um grupo de objetos/containers rodando no K8s). Quando é necessário atualizar a aplicação, não é necessário instalar um novo release e sim atualizá-lo, isto é, revisar o release.
+
+É importante não confundir release revision com Chart version ou application version, pois:
+- Release revision - é uma nova versão das instâncias dos objetos pertencentes a um release.
+- Chart version - é uma nova versão da estrutura do Chart (novas definições da aplicação, como adicionar novos objetos yaml, etc).
+- Application version - é uma atualização do código da aplicação.
+
+Quando for necessário ter 2 releases do mesmo Chart no mesmo Cluster (ex: dev e stage), será necessário alterar o nome dos objetos (Kind) do K8s, pois eles não podem se repetir no mesmo Cluster. Para facilitar esse trabalho, é possível tornar tais valores configuráveis via variáveis, através do Helm Template Engine.
+
+Helm Templage Engine utiliza caracteres especiais (variáveis) {{ .ARQUIVO_UTILITARIO.NOME_PROPRIEDADE }} nos arquivos .yaml como campos substituíveis, onde antes de enviar um Chart para o Tiller o Helm efetua a substituição de valores. São exemplos de ARQUIVOS_UTILITARIOS o values.yaml, Chart.yaml, Release.yaml, etc. É possível também extrair valores do arquivo Chart.yaml através do {{ .Chart.NOME_PROPRIEDADE }}, assim como de qualquer arquivo no diretório raiz {{.Files.NOME_PROPRIEDADE config.ini}}.
+
+Para resumir a digitação de acesso a variáveis, o Helm disponibiliza o "with", que é usado como: {{ with .ARQUIVO_UTILITARIO.NOME_PROPRIEDADE }} junto com {{ end }} no final do arquivo, sendo usado a partir daquela declaração: {{ .SUBPROPRIEDADE }}. Caso seja preciso acessar uma propriedade fora do with, é preciso usar {{ $.ARQUIVO_UTILITARIO.NOME_PROPRIEDADE }}.
+
+Também existe o Sprig functions e pipelines, que permite executar determinadas operações nos valores. 
+Ex: {{ .ARQUIVO_UTILITARIO.NOME_PROPRIEDADE | default "valor qualquer" }}
+Ex2: {{ .ARQUIVO_UTILITARIO.NOME_PROPRIEDADE | upper | quote }}
+
+Sempre que se usa o "with", a quebra de linha dele é mantida no arquivo final, então, é possível usar o caractere "-" para removê-lo.
+Ex: {{ - with .ARQUIVO_UTILITARIO.NOME_PROPRIEDADE }}
+
+Caso a identação final ficar errada com o uso de uma função, é possível forçar sua identação com o comando "indent x".
+Ex: {{ indent 6 .ARQUIVO_UTILITARIO.NOME_PROPRIEDADE }}
+
+Operadores lógicos estão disponíveis como funções: eq (equal), ne (not equal), gt (greater than), lt (lower than), or, and e not.
+Ex: or "A" "B"
+Ex2: gt "10" "20"
+
+Também podemos usar "if" (no exemplo abaixo os hífens são usados para não gerar quebras de linhas no arquivo final):
+{{- if .Values.service.name }}
+{{ .Values.service.name | trimSuffix "-" }}
+{{- else -}}
+{{ .Chart.name }}
+{{- end-}}
+
+Para criar variáveis para usar no arquivo: {{ $NomeVariavel := .Values.defaultPortName }} e seu uso é {{ $NomeVariavel}}
+Para fazer loop em listas de valores, é usado o comando {{- range .Values.ingress.hosts}} e no final {{- end}}. Caso seja preciso usar o valor do elemento do loop. após o range é preciso criar uma variável: {{- $NomeVariavel := . -}}. Também é possível juntar a criação do loop com a associação de valor: {{- range $currentHost := .Values.ingress.hosts }}.
+
+Para poder reaproveitar códigos em vários templates, é possível utilizar Helper Function, que consiste em criar o arquivo _helpers.tpl no diretório "templates" com o código que seria redundante, cercado por {{- define "NOMECHART.PROPRIEDADE"  }}, sendo usado como {{ include "NOMECHART.PROPRIEDADE" . }}. Foi usado o NOMECHART como exemplo por ser uma recomendação, já que tem seu escopo global para o Chart.
+
+Outro arquivo possível de incorporar no Chart é o "NOTES.txt" (também no diretório "templates"), que será exibido no console durante a instalação, podendo usar todos os recursos para composição de charts, como helper functions, operadores lógicos, functions e pipelines, etc.
+
+Charts precisam ser comprimidos, sendo disponibilizado para isso o comando Helm package, que nomeia o arquivo de acordo com a versão colocada no Chart.yaml, com o formato .tar .gz (a extensão do arquivo fica como .tgz) no Helm Repository.
+
+Helm Repository é um servidor Http que armazena os packages.tgz., sendo equivalente a um Npm ou NuGet, mas para Charts. Existem várias opções, como o Chartmuseum, o Nginx, Cloud, etc. 
+
+Antes de publicar um Chart no Helm Repository é necessário rodar o comando "helm repo index .", criando para ele o arquivo .index.yaml, que descreve os arquivos do package. 
+
+Por padrão, é criado um Helm Repository local (http://127.0.0.1:8879) e o stable (configurado com o K8s), mas é possível adicionar outros (custom).
+
+Existe um repositório oficial hospedado pela Google (https://kubernetes-charts.storage.googleapis.com/), que pode ser acessada via site https://hub.helm.sh (sendo similar ao Docker Hub).
+
+É possível gerenciar dependências entre Chart packages, via arquivo requirements.yaml, que contem o nome do package, a versão compatível e o endereço do repositório. 
+
+Sendo a versão composta por major.minor.hotfix, quando não se quer fixar como dependência uma versão específica, mas sim um range de versões, basta usar na frente na versão:
+- caractere "~", indica aquela versão ou superior até uma mudança do minor version
+- caractere "^", indica aquela versão ou superior até uma mudança do major version
+- "x" (usada no dígito), indica qualquer versão daquele digito
+- "-" (usada entre 2 versões), indica o intervalo aceito
+
+Quando executado o "Helm dependency update <CHART>", toda estrutura é baixada do Helm Repository e criado um arquivo "requirements.lock", fixando especificamente as versões baixadas. Quando for necessário baixar novamente a mesma versão deve ser usado o "Helm dependency build <CHART>", pois se usar o update será baixado a última versão do Helm Repository.
+
+É possível colocar Condition e Tags em cada Chart do arquivo requirements.yaml, podendo ter os valores sobrescritos ao fazer "Helm Install" usando o --set chave=valor (essa é uma abordagem recomendada para não precisar mudar os arquivos .yaml sempre que se deseja liberar uma versão em ambientes diferentes, como dev e stage).
+
+Existe a opção também de um Chart pai ler os valores definidos no Chart filho, configurando isso no requirements.yaml através do comando "import-values:" e configurando a chave filha a ser lida e a chave pai que será a utilizadora.
+
+>>> Lista de Comandos Kubernetes <<<<
+
+>> VERIFICA CLUSTERS JÁ AUTENTICADOS PREVIAMENTE
+kubectl config get-contexts
+kubectl config use-context <yourClusterName>
+
+>> CRIA CONTAINER NA INFRA K8S 
+> DIRETO VIA COMANDO CONSOLE
+kubectl run <NOME_CONTAINER> --image=<IMAGEM_DOCKER> --replicas=1)
+kubectl scale --replicas=3 rc <NOME_CONTAINER>
+kubectl get events | head -5
+
+> VIA NOME DE ARQUIVO
+kubectl create -f <ARQUIVO>.yml
+
+> VIA NOME DE OBJECTO KIND
+kubectl create <NOME_KIND>
+
+>> Pods
+kubectl get pods
+kubectl get pods --all-namespaces
+kubectl describe pods
+kubectl delete pods <NOME_DO_POD>
+
+>> Services
+kubectl expose rc <REPLICATION_CONTROLLER_NAME> --name=<SERVICE_NAME> --target-port=8080 --type=NodePort 
+kubectl get rc -o wide
+kubectl describe services <NOME> --namespace <NOME_NAMESPACE>
+minikube service <NOME> --url
+
+> Ao criar serviço, dns é criado conforme abaixo
+<service-name>.<namespace-name>.svc.cluster.local
+svc-poc-telepreco-bff
+
+11005
+
+>> Deployment
+kubectl create -f deploy.yml
+kubectl apply -f URL-deploy.yml --record
+kubectl rollout status deployment <NOME_DEPLOYMENT>
+kubectl get deploy <NOME_DEPLOYMENT>
+kubectl rollout history deployment <NOME_DEPLOYMENT>
+kubectl get rs (replica sets history)
+kubectl rollout undo deployment <NOME_DEPLOYMENT> --to-revision=1
+
+>> Secret
+kubectl create secret docker-registry <NOME> --docker-server <URL_PROVEDOR_REGISTRO_IMAGENS> --docker-username <LOGIN> --docker_password <SENHA>
+
+Para utiliza-lo, colocar dentro do Kind Deployment, no mesmo nivel da tag "containers" que armazena o nome da imagem docker a tag imagePullSecrets: - name: <NOME> 
+
+>> OUTROS
+kubectl api-resources
+kubectl get nodes
+kubectl config current-context
+kubectl config view
+kubectl get secret --namespace default
+kubectl get all --namespace=kube-system -l name=tiller (obtém IP e porta exposto para o Cluster)
+kubectl get namespace
+kubectl logs deploy-poc-weather-799f67cbb7-458n9 --namespace gordon-namespace
+minikube start
+minikube addons enable ingress
+minikube get pods -n kube-system
+minikube ip
+
+>>>COMANDOS HELM<<<
+helm init
+helm init --history-max 200
+helm version --short
+helm create my-app (scaffold de arquivos e diretórios para um package helm)
+
+helm install <CHART>
+helm install <CHART> --name dev
+helm install <CHART> --name dev --set frontend.config.guestbook_name=DEV
+helm update <RELEASE> <CHART>
+helm rollback <RELEASE> <REVISION>
+helm history <RELEASE>
+helm status <RELEASE>
+helm get <RELEASE>
+helm delete <NAME>
+helm delete <NAME> --purge
+helm list
+
+> ver Chart.yaml já com variáveis substituídas por valores
+helm get hardy-moose (ver valores após instalação)
+helm template <CHART> (para teste, onde ver valores sem instalar nada)
+helm template <CHART> -x templates/<ARQUIVO>.yaml
+helm install --dry-run --debug 
+helm install -f <ARQUIVO> (especifica arquivo adicional de valores para as variáveis usadas no template)
+helm install --set name=value (injeta valores nas variáveis durante comando no console)
+helm lint (encontra bugs no template)
+
+helm package <CHART>
+helm repo index .
+helm repo list
+helm repo add myrepo http://myserver.org/charts
+help repo remove myrepo
+helm package --sign
+helm verity chart.tgz
+helm install --verify
+helm dependency update <CHART> (baixa o packages dependentes)
+helm dependency list <CHART>
+helm dependency build <CHART>
+helm install <CHART> --set database.enabled=true
+helm install <CHART> --set tags.api=true
+
+Adding stable repo with URL: https://kubernetes-charts.storage.googleapis.com
+Adding local repo with URL: http://127.0.0.1:8879/charts
+$HELM_HOME has been configured at C:\Users\econforti\.helm.
+service/tiller-deploy   ClusterIP   10.108.79.45   <none>        44134/TCP
+
+github com lab do Helm: https://github.com/phcollignon/helm
+
+>>>Azure Kubernetes Service<<<
+az login (arquitetura@mercadocarmercantil.onmicrosoft.com e Dovu41293)
+az aks list -o table
+az aks get-credentials -n <yourClusterName> -g <yourResourceGroupName>
+
+> CRIA GRUPO DE RECURSOS
+az group create --name myResourceGroup --location eastus
+
+> CRIA CLUSTER
+az aks create --resource-group myResourceGroup --name myAKSCluster --node-count 1 --enable-addons monitoring --generate-ssh-keys

@@ -309,3 +309,24 @@ I'm researching some author/authent, So I will leave here some gathering:
             Easy integration to RBAC
 
 So, the choice here is KeyCloak.
+Returning to tracing. I'm trying to install jaeger.
+First I must upgrade k8s version. Below is the command to check upgrades
+az aks get-upgrades --resource-group Arquitetura --name k8s-arquitetura --output table
+No, I cant upgrade further...
+I think I know what happened...Jaeger Operator uses crd-install hook that is deprecated in helm 3.
+Ok, I got away from jaeger operator and tried the normal jaeger helm. I hit dep upgrade.
+But, when we hit dep upgrade, it doesnt remove older dependencies and seems that helm is still
+using them just because they sit on charts/ folder. Interesting.
+
+So, Elastic + Prometheus + Jaeger is not working due a lack of cpu + memory on our cluster.
+I need to reduce their resources allocation in order to pods start. Sad.
+After one day of struggling, I ended up with ELK stack. No Prometheus. Jaegger keeps in.
+Seems like these products like resources very much. We need a lot of memory and cpu.
+
+Seems like elasticsearch will remain healthcheck yellow status for nodes < 2.
+Also, take a lot of careful with charts that installs things under the hood. Jaegger
+can install ES if you misconfigure. If you already has ES, then a conflict will show up.
+Something that took me 3hs to figure out. Very pissed here.
+
+There is one thing, I will not commit the observability feature until its finished, so the
+other team members can use it fully.

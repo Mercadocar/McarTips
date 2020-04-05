@@ -11,5 +11,5 @@ spec:
     spec:
       containers:
       - name: mcarmicroservicepessoa
-        image: rodoflho/mcarmicroservicepessoa:latest
+        image: mcarimageregistry.azurecr.io/microservice-pessoa:latest
         imagePullPolicy: Always

@@ -11,5 +11,5 @@ spec:
     spec:
       containers:
       - name: mcarbabymicroservicefrontend
-        image: rodoflho/babypocfrontvue:latest
+        image: mcarimageregistry.azurecr.io/baby-frontvue:latest
         imagePullPolicy: Always
