@@ -343,3 +343,37 @@ You can usually save space by:
     2 - You can turn off indexing on fields you don't need to search by or you can use index_options to store fewer things.
     3 - _force_merge  old indices. You can also look at the shrink API to reduce the number of shards. These aren't mutually exclusive but don't save a ton of space, usually.
     There are probably more ways
+
+Ok, filebeat is sending logs to elasticsearch. But our microservices are not prepared to send logs written
+the best way we can. So, I chose Serilog to be our logging framework. The reason is the great support for
+structured log, which is very important. Why structured logs? Because noSQL like elasticsearch stores this
+data very well and kibana can visualize better and the most important, make good searches. So, to enable the
+most powerful side of ELK, we must write structured logs.
+Here some logging best practices:
+    1 - Use log levels appropriately. The levels are usually Debug, Info, Warn, Error, Fatal or similar.
+    2 - Enable only high-severity logs in Production.
+    3 - Log Exceptions. Use log.error(). Use .net middleware like https://code-maze.com/global-error-handling-aspnetcore/.
+    4 - Use Structured Logging.
+    5 - Redact Sensitive Information. Remove sensitive user data. Setting minimum log level to "Warn" or "Error" in production.
+
+Nice, but, what to log?
+
+    Where From   |   Who is in Play   |   What else?   
+    ------------------------------------------------
+    Product      |   User             |   Time Spend
+    layer        |   Customer         |   Parameters
+    Location     |                    |
+    HostName     |                    |
+
+
+With serilog, we can leverage logs by its type. So we will end up having 4 types of logs,
+each one with it's logger object and different files. This has benefits, most of them regarging
+organization. In our system, we will collect the all 4 types on files with filebeat, but we cant
+later decide to send each log type to a different place. So this is a good Practice. The types are:
+    UsageLogger
+    PerformaceLogger
+    ErrorLogger
+    DiagnosticLogger
+
+Gonna create a lib project to be consumed by other microservices. There we will define logging system.
+Go find which. It will be a manifest (nuget package). Gonna make it right now.
