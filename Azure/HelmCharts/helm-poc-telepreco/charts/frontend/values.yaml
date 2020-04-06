@@ -1,0 +1,6 @@
+image:
+    name: baby-frontvue
+    tag: "latest"
+replicaCount: 1
+label:
+    name: frontvue

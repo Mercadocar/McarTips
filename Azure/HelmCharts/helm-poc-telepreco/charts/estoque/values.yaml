@@ -1,0 +1,6 @@
+image:
+    name: baby-microservice-estoque
+    tag: "latest"
+replicaCount: 1
+label:
+    name: estoque

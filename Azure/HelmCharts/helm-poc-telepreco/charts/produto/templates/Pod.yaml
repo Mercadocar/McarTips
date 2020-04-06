@@ -1,15 +1,15 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: deploy-poc-telepreco-produto
+  name: deploy-{{ .Release.Name }}-{{ .Values.label.name }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
   template:
     metadata:
       labels:
-        app: poc-telepreco-bff-produto
+        app: {{ .Values.appBffLabel }}-{{ .Values.label.name }}
     spec:
       containers:
-      - name: mcarbabymicroserviceproduto
-        image: mcarimageregistry.azurecr.io/baby-microservice-produto:latest
+      - name: {{ .Values.image.name }}
+        image: {{ .Values.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
         imagePullPolicy: Always

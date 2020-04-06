@@ -1,0 +1,6 @@
+image:
+    name: microservice-orcamento
+    tag: latest
+replicaCount: 1
+label:
+    name: orcamento

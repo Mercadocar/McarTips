@@ -1,5 +1,5 @@
 image:
-    name: baby-microservice-asterisk
+    name: baby-bff-telepreco-asterisk
     tag: "latest"
 replicaCount: 1
 label:

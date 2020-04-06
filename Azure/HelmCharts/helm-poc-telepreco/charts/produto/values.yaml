@@ -1,0 +1,6 @@
+image:
+    name: baby-microservice-produto
+    tag: latest
+replicaCount: 1
+label:
+    name: produto

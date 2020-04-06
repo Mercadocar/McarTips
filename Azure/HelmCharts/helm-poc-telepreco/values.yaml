@@ -13,3 +13,33 @@ nginx-ingress:
 poc-telepreco-atendimento:
   appBffLabel: poc-telepreco-bff
   repository: mcarimageregistry.azurecr.io
+poc-telepreco-asterisk:
+  appBffLabel: poc-telepreco-bff
+  repository: mcarimageregistry.azurecr.io
+poc-telepreco-orcamento:
+  appBffLabel: poc-telepreco-bff
+  repository: mcarimageregistry.azurecr.io
+poc-telepreco-pessoa:
+  appBffLabel: poc-telepreco-bff
+  repository: mcarimageregistry.azurecr.io
+poc-telepreco-produto:
+  appBffLabel: poc-telepreco-bff
+  repository: mcarimageregistry.azurecr.io
+poc-telepreco-sac:
+  appBffLabel: poc-telepreco-bff
+  repository: mcarimageregistry.azurecr.io
+poc-telepreco-cliente:
+  appBffLabel: poc-telepreco-bff
+  repository: mcarimageregistry.azurecr.io
+poc-telepreco-estoque:
+  appBffLabel: poc-telepreco-bff
+  repository: mcarimageregistry.azurecr.io
+poc-telepreco-frontend:
+  appBffLabel: poc-telepreco-bff
+  repository: mcarimageregistry.azurecr.io
+poc-telepreco-bff:
+  appBffLabel: poc-telepreco-bff
+  repository: mcarimageregistry.azurecr.io
+poc-telepreco-bff-asterisk:
+  appBffLabel: poc-telepreco-bff
+  repository: mcarimageregistry.azurecr.io

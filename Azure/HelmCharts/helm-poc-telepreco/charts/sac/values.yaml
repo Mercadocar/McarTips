@@ -1,0 +1,6 @@
+image:
+    name: baby-microservice-sac
+    tag: latest
+replicaCount: 1
+label:
+    name: sac

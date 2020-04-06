@@ -1,0 +1,6 @@
+image:
+    name: baby-bff-telepreco
+    tag: "latest"
+replicaCount: 1
+label:
+    name: bff

@@ -1,0 +1,6 @@
+image:
+    name: baby-microservice-cliente
+    tag: "latest"
+replicaCount: 1
+label:
+    name: cliente

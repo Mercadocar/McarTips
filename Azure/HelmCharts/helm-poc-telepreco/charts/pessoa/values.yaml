@@ -1,0 +1,6 @@
+image:
+    name: microservice-pessoa
+    tag: latest
+replicaCount: 1
+label:
+    name: pessoa
