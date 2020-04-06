@@ -279,14 +279,11 @@ Keywords from Jaeger:
     Trace – The way Jaeger presents execution requests. A trace is composed of at least one span.
 Just to record a possible Observability stack for our architecute:
 A basic level of Observability:
-    Elasticsearch-operator -> Tool to store and search for logs (and also maybe tracing)
-    Jaeger-operator -> Tracing tool that uses OpenTracing standard
-    Prometheus-operator -> systems and service monitoring system. It collects metrics from
-        configured targets at given intervals, evaluates rule expressions, displays the results, and can trigger alerts if some condition is observed to be true.
+    Elasticsearch -> Tool to store and search for logs (and also maybe tracing)
+    Jaeger -> Tracing tool that uses OpenTracing standard
     Weavescope -> Weave Scope automatically detects processes, containers, hosts.
-    Fluent-bit -> Log Processor and Forwarder which allows you to collect data/logs from different sources
+    filebeat -> Log Processor and Forwarder which allows you to collect data/logs from different sources
     Kibana -> Visualize Elasticsearch Data
-    Grafana -> Monitoring Tool: its focus on data visualization.
 So, how Observability would work here:
 Following the three pilars of Observability, we got:
     Tracing: OpenTracing Jarger
@@ -294,6 +291,13 @@ Following the three pilars of Observability, we got:
         Elasticsearch, which we can visualize using kibana and prometeus
     Metrics: Wavescope for infrastructure, Prometeus for Events
         and alerts and grafana for all purpose monitoring.
+
+To solve a problem, the flow:
+    1 - consulting Grafana/kibana dashboards
+    2- look up raw metrics (in Prometheus, for example)
+    3 - consultation of logs entries (Elasticsearch, for example)
+    4 - possibly, consultation of the distributed traces (Jaeger, Zipkin, etc.)
+    5 - finally, correction of the original problem.
 
 I'm researching some author/authent, So I will leave here some gathering:
     RBAC (Role-Based Access Control)
@@ -330,3 +334,12 @@ Something that took me 3hs to figure out. Very pissed here.
 
 There is one thing, I will not commit the observability feature until its finished, so the
 other team members can use it fully.
+
+Turned out that after just 5h, my elastic search PV got full (it has 1GB). This thing eats 
+storage like hell, so lets take some notes about how to manage storage on ES:
+You can usually save space by:
+
+    1 - You can turn off doc_values for fields you won't sort or aggregate on to save space and a bit on indexing time.
+    2 - You can turn off indexing on fields you don't need to search by or you can use index_options to store fewer things.
+    3 - _force_merge  old indices. You can also look at the shrink API to reduce the number of shards. These aren't mutually exclusive but don't save a ton of space, usually.
+    There are probably more ways
