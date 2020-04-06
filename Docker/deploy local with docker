@@ -1,6 +1,6 @@
 [O que tiver sudo, é no server gitlab/]
-["docker login" antes de usar os comandos]
-[Estes comandos estao usando meu dockerhub rodoflho]
+["docker login" antes de usar os comandos para logar no dockerhub, ou "az acr login -n McarImageRegistry" para logar no ACR (Azure Container Registry)]
+[Estes comandos estao usando meu dockerhub rodoflho. Caso for usar o ACR substitua o "rodofilho" nos comandos para "mcarimageregistry.azurecr.io"]
 
 FRONT
     docker build --rm  -t rodoflho/babypocfrontvue:latest .
