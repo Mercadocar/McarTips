@@ -293,3 +293,7 @@ az group create --name myResourceGroup --location eastus
 
 > CRIA CLUSTER
 az aks create --resource-group myResourceGroup --name myAKSCluster --node-count 1 --enable-addons monitoring --generate-ssh-keys
+
+> CRIA RABBITMQ LOCAL NO DOCKER COM DASHBOARD
+docker run -d --name some-rabbit -p 5672:5672 -p 5673:5673 -p 15672:15672 rabbitmq:3-management  
+http://localhost:15672/

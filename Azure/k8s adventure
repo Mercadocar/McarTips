@@ -344,6 +344,10 @@ You can usually save space by:
     3 - _force_merge  old indices. You can also look at the shrink API to reduce the number of shards. These aren't mutually exclusive but don't save a ton of space, usually.
     There are probably more ways
 
+    Another good thing here: Its better to store different data inside same index when they are meant to
+    be part of same queries later, e.g log and trace. But to make this work, we must define the "type" on
+    each document, so elastic handles it better.
+
 Ok, filebeat is sending logs to elasticsearch. But our microservices are not prepared to send logs written
 the best way we can. So, I chose Serilog to be our logging framework. The reason is the great support for
 structured log, which is very important. Why structured logs? Because noSQL like elasticsearch stores this
@@ -361,7 +365,7 @@ Nice, but, what to log?
     Where From   |   Who is in Play   |   What else?   
     ------------------------------------------------
     Product      |   User             |   Time Spend
-    layer        |   Customer         |   Parameters
+    Layer        |   Customer         |   Parameters
     Location     |                    |
     HostName     |                    |
 
@@ -377,3 +381,64 @@ later decide to send each log type to a different place. So this is a good Pract
 
 Gonna create a lib project to be consumed by other microservices. There we will define logging system.
 Go find which. It will be a manifest (nuget package). Gonna make it right now.
+
+We need an observability code toolkit that addresses the following scenario:
+1 - Hide the Log / tracing logic of the developer to the maximum.
+2 - Offer and endorse the simplified use of log / tracing, but offer ways to complicate if necessary.
+3 - Combine tracing and logging in a single channel and offer classes that increase behaviors.
+4 - Show visible separation between issuing diagnostic, usage, error and performance logs.
+5 - Automatize logging and tracing for each request or important service edge.
+
+Ok, back to tracing+log phylosophy. Think about log and tracing, when apart, it's easy because they can
+be understood as different things. But they are more similar than we thought, when the environment is
+microservices: I will explain why, but first lets discuss more about each one
+
+    LOG: 
+        As above sections said, our log is structured. It is not just a human-readable string, it has tuples
+    field/values and is represented by json. In microservices, each structured log must define a 
+    CorrelationId to tell us later that a collection of logs are tied together to a system process, that
+    each log may belong to different microservices. With this, the scope is no more one log itself, but 
+    many, representing one functionality, from one-many microservices.
+        We will end up logging information about bonduaries... I'm saying that when a request arrives at a micro-
+    service or a BFF, we will log data about it: User, Agent, where is coming from...the usual. The developer
+    will not worry about this, because it will be a middleware, so every request, HTTP or gRPC, and even MQ,
+    will be logged.
+        As the framework will take care of most of the logging work, the developer will just worry about
+    logging event and errors that makes sense just to his business.
+
+    TRACING:
+        Span is a unit of work, on a specific period of time. Spans relate to each other
+    by Parent/Child and "FollowsFrom". So its a acyclic graph. Span can be a database query, a heavy-
+    loaded procedure and, more important, the time and work that happens on a microservice. Well, this
+    means that when we call a service or sent MQ, we also send (in body or headers) tracing context,
+    defining in which trace we are, and what span this new span relates.
+        Another thing: on each span we can define tags, and we can define logs. Yes, Logs. But this log
+    is just a field/value. So, think what this mechanism can show us about our application. The term
+    "Tracing" makes more sense, because we can literally trace everything in our system, with
+    contextual data like tags and logs. Also a "baggage", a jaeger thing. Please check on baggages
+    and data visualization in jaegerUI.
+
+    TRACE AND LOG TOGETHER: 
+        First fact: Trace offers logging mechanism using field/value log lists. It's limited, but offers
+    coupling with span. Why tracing offers logging, it is trying to hijack some log responsabilities?
+        Second fact: Logs has correlationID. With correlation, we can track logs through time, and with
+    "where" fields like microserviceName, we can trace where is spreaded. Isnt this very similar to what
+    tracing does?
+        Third fact: Fields necessary on logs is also present in tracing. It doesnt matter where the field
+    is located, we are able to analyse it. So where to put these fields? Example: the name of the
+    microservice, tags.
+        Now, some minor facts that increases the problem about log or tracing:
+            1 - Structured logging has drawbacks: the biggest is repeating fields that doesnt offer much
+        value. Suppose we have 10 correlated logs. It is necessary to have UserId only in the first
+        log in the sequence, because since the others are correlated, the UserId will be the same. but
+        if the log is structured, UserId will remain in all. There are other fields with the same thing too.
+            2 - What log entries goes into span's log and what log entries goes into serilog strucutred log?
+        What will means more? It is true that we can write current span's traceId and spanId into log and 
+        correlate span with log, but the question here is what comes where? Which quality of logs goes where?
+        Should structured logging get user data, location data, timespan or even message? This depends because
+        logs is good to show one thing, and trace is good to another thing, and we need to spot these qualities
+        and decide which data goes where.
+        
+
+
+
