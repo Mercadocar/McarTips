@@ -438,7 +438,56 @@ microservices: I will explain why, but first lets discuss more about each one
         Should structured logging get user data, location data, timespan or even message? This depends because
         logs is good to show one thing, and trace is good to another thing, and we need to spot these qualities
         and decide which data goes where.
-        
 
+    Despite what goes where, I just finished add tracing using Jaeger. With the help of OpenTracing Instrumentation
+    library for C#, the microservice has the ability to create spans for every HTTP request and every
+    EntityFrameworkCore. From its documentation, it gets generates span for everything that uses 
+    DiagnosticSource to instrument its code. It will create a span for every Activity and it will create span.Log
+    calls for all other diagnostic events. Maybe it's i hint to use DiagnosticSource on projects to take advantage
+    of this? Lets see later.
 
+    We need to react to other events too...I'm talking about gRPC and EventBus. Fortunately, I found a lib that
+    intercept gRPC calls and generate a trace's span. But I havent got the same luck with EventBus. We must inject
+    the SpanContext inside AMQP headers on producer and extract this information on consumer. Here is where tracing
+    shines the most, because this is "fire-forget" (async) operations, and we can know exactly who fired it, when
+    and how.
 
+    OpenTracing Instrumentation for C# also injects Log into spans from Microsoft.Extensions.Logging (the default
+    .netcore logger). Combining to the fact that these logs belongs to a specific span, and information about who,
+    when and how, in structured logs, looses it's importance to the power of tracing. So, what else remains from
+    structured log, since we got all these with tracing? Seems that we can roll back to classic logging, when we
+    write information human-readable format. This instrumentation also handles exceptions and generate proper span.
+    So, I was thinking here, why use serilog, if its power is no longer necessary? I can stay with default logger and
+    enjoy it's simplicity, on-the-go feature and compatibility (also easy for developers). I can also say that I need
+    no longer the filebeat mechanism, because logs will be dealt using jaeger.
+
+    We may have a controversy here... Am I killing logs? No! They exist, developers will continue to use them normally,
+    without even knowing that it will be delivered to tracer. What is happening here, is that we are not structuring
+    the ability to observe microservices using logs, but using tracing instead. Tracing is how we see everything. Log
+    became just developer pure information that happened in a span of time. Remember, to make logs deliver the
+    observability leve we desire, it must provide where, who and how something happened, also tie together microservice
+    calls (using correlationID) to see which path the operation is taking on microservice system. Knowing this, tracing
+    solves this much better. Log is no more superpowered for the wrong reasons. Now it is what it supposed to be. Also,
+    tracing is much more microservice like than log. Log is just log.
+
+    Now, lets talk about baggage. This jaeger feature gives us the ability to carry key:value fields across all
+    spans in a trace. A good example: when a customer update request arrives on BFF, we can store the user_id of 
+    that client in the baggage, so every spanned microservice will know which user made the request, using tracing.
+    Of course that this is not the way we will handle authorization inside the cluster, is just an example. But, we
+    can send any type of information inside a request, being the request of any type. Now imagine a scenario where we
+    have a request of 10 depth-in microservice. The last microservice need an info that we only know at level 1. Are
+    we going to send this through all microservices, changing their schema and API's, just for that last microservice
+    know? Or make the last microservice query for it using any method you could name? Well...no. With tracing baggages,
+    we can send any info through all depth without changing anything. This is a very powerful feature. Just dont
+    forget to not overuse it, keep in mind that this increases the size of the request. Just send small things across
+    the bounduaries, please!
+
+    So, the next code updates will take this course:
+        1 - Remove usage of Serilog. We are using native dotnet logging.
+        2 - Abstract the usage of jaeger using MCar.Observability. Microservice developers shouldn't know much about
+    tracing technology. I'm aiming a goal where the dev configures once, program the service and don't worry about tracers,
+    spans and everything. It's clear that I should provide ways to start and finish a span, if he wants, but every application
+    must be tracing ready. This is a must.
+        3 - Implement ways to set baggages and get them, on any bounduary.
+        4 - Abstract the naming conventions and document a tutorial to use observability tools. Also alert for its
+    importance.
