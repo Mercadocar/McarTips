@@ -491,3 +491,30 @@ microservices: I will explain why, but first lets discuss more about each one
         3 - Implement ways to set baggages and get them, on any bounduary.
         4 - Abstract the naming conventions and document a tutorial to use observability tools. Also alert for its
     importance.
+
+    Again in this subject, today I achieve Intrumentation for tracing and logs without having to write a single trace code,
+    or better saying, without even knowing there is something recording tracing. This desired scenario aims future developers
+    that dont need to know these architecture details. They can code their microservices and enjoy observability out-the-box.
+    So, today, the instrumented comunications include:
+        1 - HTTP
+        2 - gRPC
+        3 - EventBus
+
+    I would like to go even further: develop a service where we configure gRPC and EventBus automatically. It would be like
+    this: services.AddInstrumentation();
+    Then support for gRPC and EventBus will be included.
+    But, for gRPC endpoints and EventBus integration events, we still need to define them. There is no way to a commom library
+    guess these folks. But very straightfoward to define. Like:"
+
+    app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapGrpcService<PessoaService>();
+        });
+    }
+
+    and
+
+    var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
+    eventBus.Subscribe<PessoaCriadaEvent, PessoaCriadaHandler>();
+    eventBus.Subscribe<PessoaAtualizadaEvent, PessoaAtualizadaHandler>();
+    app.UseRabbitChannel();
