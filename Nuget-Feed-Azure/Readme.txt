@@ -7,8 +7,8 @@ Caso esteja no Windows, basta colocar seu caminho de acesso nas variáveis de am
 
 https://docs.microsoft.com/pt-br/nuget/reference/nuget-exe-cli-reference
 
-2- Efetue o download do dotnet SDK 2.1.400 ou superior e instale-o
 https://dotnet.microsoft.com/download
+2- Efetue o download do dotnet SDK 2.1.400 ou superior e instale-o
 
 Caso esteja no Windows e não tenha o Visual Studio
 
@@ -26,7 +26,7 @@ https://github.com/microsoft/artifacts-credprovider#azure-artifacts-credential-p
 3- Execute no console para efetuar as seguintes ações:
 
 - Configurar o private feed
-nuget.exe sources Add -Name "AzureMcarPrivateFeed" -Source "https://pkgs.dev.azure.com/arquitetura0301/CICDProject/_packaging/AzureMcarPrivateFeed/nuget/v3/index.json" -username unused -password "gh54ka6r4huygggkmd3xhumeiqaztqd4urwrv3cmvox7uny4jfsa"
+nuget.exe sources Add -Name "AzureMcarPrivateFeed" -Source "https://pkgs.dev.azure.com/arquitetura0301/CICDProject/_packaging/AzureMcarPrivateFeed/nuget/v3/index.json" -username unused -password "kcatxn4dr5dbtiy3nwblkreljqjfx3fn76lwb4hbwwmqeyytlnra"
 
 Outra forma de adicionar um novo feed é criar um arquivo "nuget.config" por projeto, contendo as informações de conexão
 
@@ -82,6 +82,18 @@ dotnet add <NOME_PROJETO>.csproj package <NOME_PACOTE> -v <VERSAO_PACOTE>
 Criar Token "AzurePrivateFeedCredential", e obter uma chave (a atual é "gh54ka6r4huygggkmd3xhumeiqaztqd4urwrv3cmvox7uny4jfsa")
 
 Criar um novo Feed com as opções default (exceto a de permissão, que deve ser marcada a para utilizar os membros de sua organização), depois clicar no Feed > Connect to feed, e obter o valor da "Package source URL".
+
+> How to solve artifact push errors:
+  When error is like: "Unable to load the service index for source https://pkgs.dev.azure..." and "InvalidKey"
+    Reason: You are using the old account (arquitetura@...) token key.
+    Solution:
+      1. Go to Devops, click upper-right "User Settings" then "Personal Access Tokens".
+      2. Create your key and store it.
+      3. Now you need to remove your local artifacts source that is using the old token:
+        - nuget sources Remove -Name "AzureMcarPrivateFeed"
+      4. Now create the token again:"
+        - nuget.exe sources Add -Name "AzureMcarPrivateFeed" -Source "https://pkgs.dev.azure.com/arquitetura0301/CICDProject/_packaging/AzureMcarPrivateFeed/nuget/v3/index.json" -username unused -password "YOUR_KEY_HERE"
+      5. Now you are authorized and can push your packages.
 
 > Links de Referência
 

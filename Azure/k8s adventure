@@ -518,3 +518,5 @@ microservices: I will explain why, but first lets discuss more about each one
     eventBus.Subscribe<PessoaCriadaEvent, PessoaCriadaHandler>();
     eventBus.Subscribe<PessoaAtualizadaEvent, PessoaAtualizadaHandler>();
     app.UseRabbitChannel();
+
+    Just like this.
