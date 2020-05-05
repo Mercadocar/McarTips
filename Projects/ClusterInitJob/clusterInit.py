@@ -12,7 +12,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 postgres_username = 'postgres'
 postgres_psw = 'postgres'
 postgres_host = os.environ['POC_TELEPRECO_POSTGRESQL_SERVICE_HOST']
-rabbitmq_host = os.environ['POC_TELEPRECO_RABBITMQ_SERVICE_HOST']
+rabbitmq_host = os.environ['POC_TELEPRECO_RABBITMQ_HA_SERVICE_HOST']
 db_1_name = 'atendimento'
 db_2_name = 'orcamento'
 

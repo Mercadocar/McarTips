@@ -8,10 +8,9 @@ FRONT
     docker pull rodoflho/babypocfrontvue:latest
     docker run -p 11009:8080 -d --restart=always  rodoflho/babypocfrontvue:latest
 BFF
-    docker build --rm -f "MCar.Baby.Bff.Telepreco.API/dockerfile"  -t rodoflho/mcarbabybfftelepreco:latest .
-    docker push rodoflho/mcarbabybfftelepreco:latest
+    docker build --rm -f "MCar.Baby.Bff.Telepreco.API/dockerfile" -t mcarimageregistry.azurecr.io/baby-bff-telepreco:latest .
+    docker push mcarimageregistry.azurecr.io/baby-bff-telepreco:latest
     docker run -p 11001:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabybfftelepreco:latest
-    http://gitlab:11001/swagger/
 BFF Asterisk
     docker build --rm -f "MCar.Baby.Bff.Telepreco.Asterisk.Web/dockerfile"  -t rodoflho/mcarbabybffteleprecoasterisk:latest .
     docker push rodoflho/mcarbabybffteleprecoasterisk:latest
@@ -37,8 +36,8 @@ Asterisk
     docker push rodoflho/mcarbabyasterisk:latest
     docker run -p 11002:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabyasterisk:latest
 Pessoa
-    docker build --rm -f "MCar.Microservice.Pessoa.API/dockerfile"  -t rodoflho/mcarmicroservicepessoa:latest .
-    docker push rodoflho/mcarmicroservicepessoa:latest
+    docker build --rm -f "MCar.Microservice.Pessoa.API/dockerfile"  -t mcarimageregistry.azurecr.io/microservice-pessoa:latest .
+    docker push mcarimageregistry.azurecr.io/microservice-pessoa:latest
     docker run -p 11007:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarmicroservicepessoa:latest
 Attendance
     docker build --rm -f "MercadoCar.MicroService.RestAPI/dockerfile"  -t rodoflho/mcarmicroserviceattendance:latest .
@@ -52,6 +51,8 @@ Orcamento
 Other annotations:
 
 PyRabbitJob
-    docker build --rm -t rodoflho/mcarmicroserviceclusterinitjob:latest .
-    docker push rodoflho/mcarmicroserviceclusterinitjob:latest
+    docker build --rm -t mcarimageregistry.azurecr.io/cluster-initjob:latest .
+    docker push mcarimageregistry.azurecr.io/cluster-initjob:latest
     docker run -p 80:80 rodoflho/mcarmicroserviceclusterinitjob:latest
+
+
