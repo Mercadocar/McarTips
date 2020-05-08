@@ -504,19 +504,31 @@ microservices: I will explain why, but first lets discuss more about each one
     this: services.AddInstrumentation();
     Then support for gRPC and EventBus will be included.
     But, for gRPC endpoints and EventBus integration events, we still need to define them. There is no way to a commom library
-    guess these folks. But very straightfoward to define. Like:"
+    guess these folks.
+    So, now way to automatize this...We'll end up having to define tracing (forget services.AddInstrumentation()
+    above), eventbus and gRPC alone, cause we dont see clear benefits to unify them. Also, this practice
+    delivers better understanding to the developer what is happening.
 
-    app.UseEndpoints(endpoints =>
-        {
-            endpoints.MapGrpcService<PessoaService>();
-        });
-    }
+        One thing to note: Filebeat is no longer necessary? As structured logging makes no more sense
+    when tracing is doing good part of it's job, and tracing data being responsible to store the logs alongside
+    with traces, we wont output log files to console and files neither.
+        But thinking further: tracing is not always listening to logs! A good example is app startup.
+    Maybe cronjobs. Also, how do we visualize logs from our infrastructure apps like rabbitmq, elasticsearch,
+    databases and kibana? Filebeat is still necessary to log these things. Althought, we need to define
+    expiration times and filter what to log exactly, we dont want to log things twice. Something like
+    getting only the logs that tracing is not storing, maybe.
 
-    and
+    Talking about metricbeat: the metrics shipper from Elastic. Well, the default configuration that comes
+    with the official chart is just "kubernetes" and "system". It's not enough. They got so many more 
+    modules for us to use! Check this: https://www.elastic.co/guide/en/beats/metricbeat/current/metricbeat-modules.html
+    The ones I got interested are: RabbitMQ, Azure, MongoDB and PostgreeSQL. Get specific metrics from these
+    apps will add a lot of value.
+    More on Beats: there are other solutions, I'm gonna validate packetbeat and check if I get more metrics.
 
-    var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
-    eventBus.Subscribe<PessoaCriadaEvent, PessoaCriadaHandler>();
-    eventBus.Subscribe<PessoaAtualizadaEvent, PessoaAtualizadaHandler>();
-    app.UseRabbitChannel();
+    We are growing bigger in infrastructure apps. The devops will need to access a lot of dashboards to
+    visualize and manage the cluster. A starting point page on /admin, containing link to tutorials and
+    links to dashboards, alongside with tips and other nice things, would be cool. Could be a timesaver
+    for the devops and a good starting place for those learning.
 
-    Just like this.
+    Now, the next subject here is load testing...on it right now.
+
