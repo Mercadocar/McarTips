@@ -530,5 +530,27 @@ microservices: I will explain why, but first lets discuss more about each one
     links to dashboards, alongside with tips and other nice things, would be cool. Could be a timesaver
     for the devops and a good starting place for those learning.
 
+    A good add to our observability is the weavescope. With it we can:
+        1 - Visualize nodes, pods, containers, service and all in graph mode.
+        2 - Check each container by cpu and memory.
+        3 - Control pod and container, showing logs, append shell, restart, stop.
+        4 - All real-time. Really handy. Check /map
+
     Now, the next subject here is load testing...on it right now.
+    The tool I chose is the Locust, from Locust.io. It is a tool that swarms thousands of
+    users that will hit our apis the way we configured them, using python code. After hit
+    our BFF on each microservice, at a rate of 3 requests/second each, I could note some
+    behavior that I would worry about:
+        1 - At highest request rates, jarger begins to behave oddly. Things like
+            span-withou-root appears and different span hierarq.
+        2 - RabbitMQ receives more messages than it can deliver.
+        3 - Microservices consume 10x more memory when on load. But when the
+            load test stops, the memory dont retain, it keeps the same. Maybe the
+            expected behavior is to reduce memory when not under load?
+        4 - When load is heavy, microservices takes more time to respond. We are 
+            not running cache right now. But we should.
+    
+    Our POC isn't using the potencial of Async Programming and not using cache. I will
+    dive into this now and expect to get better results.
+
 
