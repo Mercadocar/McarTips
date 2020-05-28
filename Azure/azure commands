@@ -1,0 +1,1 @@
+az vmss scale --name aks-agentpool-86592511-vmss --new-capacity 0 --resource-group MC_RodolphoResource_des-v4_eastus
