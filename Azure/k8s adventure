@@ -553,4 +553,19 @@ microservices: I will explain why, but first lets discuss more about each one
     Our POC isn't using the potencial of Async Programming and not using cache. I will
     dive into this now and expect to get better results.
 
+    So, let's make this better: implementing Quality of Services (QoS)
+    There are three types:
+        1. Guaranteed
+            if you have “sensitive” app for cpu spikes OR want to minimize latency
+            it may cause OR don’t want to overcommit CPU resources (Kubernetes
+            scheduler will track and enforce it)
+        2. Burstable
+            for most, generic workloads with some priorities by setting different
+            request<->limit gaps according to requirement
+        3. BestEffort
+            for non-critical workloads, batch jobs and any workload that spans
+            dozens/hundreds nodes since classes are used by local node scheduler
+            ONLY when there’s a higher demand of supply
+
+
 

@@ -1,0 +1,34 @@
+STEP 1
+    Go and Start the AKS creation wizard.
+        https://portal.azure.com/#create/microsoft.aks
+STEP 2  
+    Select your resource group, dont choose for the auto-generated ones,
+    prefer the human readable created by you.
+
+STEP 3
+    Select "Standard_A2_v2".
+    Reason: it is the cheapiest that meet the criterias:
+        -> It's not premium disk supported. So all persistent volumes
+        created will be HDD.
+        -> The smallest machine that allows to create a cluster with just
+        one node.
+STEP 4
+    Go to https://azureprice.net/
+    Find the region where Standard_A2_v2 is cheapest.
+STEP 5
+    One node size, select just 1!
+    Disclaimer: dont worry, this is a development enviroment, and 
+    you won't use all cluster features. Just 1 is fine.
+
+STEP 6 
+    Go to Integrations Tab
+    Locate Container Monitoring and DISABLE IT.
+
+STEP 7
+    Go ahead and create the cluster.
+
+Tips:
+    1. Brand new clusters arent't registered on Image Registries. So some
+    of the images wont pull. Ask for permission on the Registry.
+    2. Your local kubectl cli isn't configured for the new cluster, so:
+        az aks get-credentials --resource-group RESOURCE_NAME --name CLUSTER_NAME
