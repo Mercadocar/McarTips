@@ -567,5 +567,12 @@ microservices: I will explain why, but first lets discuss more about each one
             dozens/hundreds nodes since classes are used by local node scheduler
             ONLY when there’s a higher demand of supply
 
+    Since microservices are the most important asset on a cluster, they all should be
+guaranteed. We implemented just one, lets do the others.
+
+
+Azure Files Pricing:
+R$0,243/GiB/Month
+
 
 
