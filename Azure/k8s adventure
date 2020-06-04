@@ -549,10 +549,54 @@ microservices: I will explain why, but first lets discuss more about each one
             expected behavior is to reduce memory when not under load?
         4 - When load is heavy, microservices takes more time to respond. We are 
             not running cache right now. But we should.
+        5 - gRPC isn't load balancing.
     
-    Our POC isn't using the potencial of Async Programming and not using cache. I will
+    Our POC isn't using the full potencial of Async Programming and not using cache. I will
     dive into this now and expect to get better results.
 
+    Load tests burned the bill...We paid a lot for Log Ingestion: a default feature when creating
+    k8s clusters. Fortunately, we can disable it before create now. But more than disabling this,
+    we are engaged into find ways to reduce the bill. Let's explore some points:
+        1 - Pay attention to the premium storage:
+            Seems that azure clusters defines default storage for each cluster type. If your cluster
+            is premium managed storage, it will create that when you provision a PV. Of course you
+            can change that on the storage section of yaml file. The key is make sure you aren't 
+            creating a premium storage.
+        2 - Replace SSD storage to HDD.
+            I found no way to perform this. If you do a kubectl get storageclass, you will find
+        default and premium versions of azure files (wont work) and default storage. When you
+        use default, SSD pops out as the format on azure portal. Every cluster do this, and I'm
+        after a way to do this, maybe building our own storageclass??
+        3 - Use commands to scale up and down from command line. This is useful to scale down
+        clusters when we are not using them. Good to know that when you scale to zero, your
+        pods enter in pending status and no cluster charge is applied. We can easily scale
+        to zero and to one with no problem.
+        4 - Azure files would be great but it just doesnt work. Azure Files Pricing:
+        R$0,243/GiB/Month
+
+        gRPC not balancing worth a discussion here: we bet a lot on it at the beggining because
+    it were a perfect fit for our needs: fast, hard api typing by protobuf and would work
+    just internally, so no worries about protobuf... 
+        The first version of gRPC for GO had load balancing implemented, but our dotnet version
+    from microsoft isn't. As gRPC channels are long lived, one pod connects to another and
+    stay alive, sending messages as long as the channel is alive. If the pod catches fire,
+    the service load balance won't help because the only connection it see it's TCP from the
+    channel first handshake. So, all messages from gRPC happens at L7, but the connections
+    that service loads balance is L5...
+        Three options to solve this:
+        1 - get back to http
+        2 - install a service with grpc support mesh to performs balance
+        3 - Implement a load balance on the client
+    To make #3 happen, we must do an algorithm to count messages from each channel, and
+    when it hits a maximum, kill that channel and create two new ones. Kill the first
+    channel will free the server pod of burden, and the new ones will get load balanced by
+    k8s service to other free pods. With channels being created all the time, and distributed
+    all the time to different pods, a simple load balance appears. It's very simple and crude,
+    but works.
+        What option to follow isn't well defined yet.
+
+    After the load-test show us how un-prepared our cluster is to bear load, we should go
+    ahead and find the solutions...
     So, let's make this better: implementing Quality of Services (QoS)
     There are three types:
         1. Guaranteed
@@ -570,9 +614,47 @@ microservices: I will explain why, but first lets discuss more about each one
     Since microservices are the most important asset on a cluster, they all should be
 guaranteed. We implemented just one, lets do the others.
 
+    Quality of Service led me to the HPA subject (horizontal pod autoscaler). It's a 
+kubernetes object responsible to scale a POD based on a metric from k8s API. For ex:
+by default, k8s has the metrics: CPU and Memory when related to pods. Works like this:
+if the pod reaches 80% of CPU, the HPA scales another one. After the balancing, if one
+of the two reaches 80% again, another one will appear, and so on...The HPA also delimiters
+how often it queries the metrics to know the resources, it's tipically 15s.
+    HPA do much more: you can set it by value or percentage. The HPA also does calculations
+based on the average resource of all pods and the resource limits for the pod. So, you need
+to take care and check your pod limits and work wisely, doing the math and load testing.
 
-Azure Files Pricing:
-R$0,243/GiB/Month
+    As said, you can only get metrics from k8s default metrics, but you should, certainly,
+take a look at custom metrics, because the default one seems very basic. A perfect example
+of a very desirable custom metrics is message brokers queue informations, and we gonna need it.
+So, our current need is: When a rabbitmq queue gets too crowded and the pod consumers arent'that
+handling such a load, HPA must take actions and scale up. Now comes the questions you should make
+when you think of use custom metrics:
+    1 - How to get these metrics from your resource?
+    2 - How to expose these metrics to kubeapi?
+    3 - How to use the custom metric on a HPA k8s object?
+
+    Fortunately, options 2 and 3 can be pretty the same for all metrics, and I will tell how in
+a moment. So, for item 1, we can imagine that each application (elasticsearch, rabbit, for ex), 
+must define a metric API to expose the metrics, but each application is different and apply metrics
+differently. The goal is get a standard way to expose metrics to a centralized guy, and we are 
+talking about Prometheus.
+    So, Prometheus is scrapping and storing metrics for all resources it got configured to.
+Of course, the kubernetes default things are included. But you may ask: k8s already know it's 
+metrics. So why prometheus? Well, because that with prometheus you can do alerting, visualize
+data in grafana and can query the data using it's query language...
+    Prometheus alone won't integrate to k8s custom metrics to use inside a HPA alone. For this,
+we need Prometheus Adapter. A adapter here is a software that will expose metrics on a server,
+following the k8s metrics standard. So, item 2 you solve with the prometheus and it's adapter
+and item 3 with the adapter alone. Now comes the item 1:
+    To integrate your app to prometheus, first you should check for official integrations with
+Prometheus. RabbitMQ has a plugin that does this and we are using it. It allows us to use the
+RabbitMQ Dashboard, that, for me, it's better visualization than default Rabbit dashboard...To
+integrate the adapter, you should write the rules in adapters yaml, you can find these examples
+in our helm project.
+
+
+
 
 
 
