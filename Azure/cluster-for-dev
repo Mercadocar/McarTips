@@ -6,7 +6,7 @@ STEP 2
     prefer the human readable created by you.
 
 STEP 3
-    Select "Standard_A2_v2".
+    Select "B2s" (or the cheapest based on link at step 4)
     Reason: it is the cheapiest that meet the criterias:
         -> It's not premium disk supported. So all persistent volumes
         created will be HDD.
