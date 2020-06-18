@@ -1,3 +1,11 @@
+REQUIREMENTS
+    - Install az cli
+        https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest
+    - Install kubectl
+        az aks install-cli
+    - Install helm 3
+        https://helm.sh/docs/intro/install/
+    
 STEP 1
     Go and Start the AKS creation wizard.
         https://portal.azure.com/#create/microsoft.aks
@@ -32,3 +40,23 @@ Tips:
     of the images wont pull. Ask for permission on the Registry.
     2. Your local kubectl cli isn't configured for the new cluster, so:
         az aks get-credentials --resource-group RESOURCE_NAME --name CLUSTER_NAME
+        
+STEP 8
+    Init the local heml repository:
+        helm repo index .
+
+STEP 9
+    Download the dependency packages:
+        helm dependency update
+
+STEP 10
+    Deploy chart configuration to the cluster,
+    on a new one:
+        helm install poc-telepreco .
+    or updating an existing one:
+        helm upgrade poc-telepreco .
+
+Tip: You can use the arg "--namespace NAMESPACE-NAME" 
+     or ommit it to use a default namespace, that can be configured with:
+        kubectl config set-context --current --namespace=default
+
