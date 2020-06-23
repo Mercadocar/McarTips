@@ -12,7 +12,8 @@ I just created the k8s on azure. Let´s try to access it locally.
     "az aks install-cli" to install AKS. Set the variables as it commands.
     Then find the resource group, the k8s cluster name and run:
     (this command below actually works today)
-    az aks get-credentials --resource-group Arquitetura --name k8s-arquitetura
+    az aks get-credentials --resource-group RodolphoResource --name des-v6
+
     "kubectl get nodes" to see if works
     Nice. Now we can control k8s on azure locally.
 
@@ -653,6 +654,7 @@ RabbitMQ Dashboard, that, for me, it's better visualization than default Rabbit 
 integrate the adapter, you should write the rules in adapters yaml, you can find these examples
 in our helm project.
 
+    Now I'm gonna provide details about the prometheus and the custom metrics.
 
 
 

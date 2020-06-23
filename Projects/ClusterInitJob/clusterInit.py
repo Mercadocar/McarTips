@@ -7,6 +7,8 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 # Script to create cluster required resources:
 
+# TODO - Create databases using loop
+# TODO - Pass informations through env variables.
 
 try:  
     rabbitmq_host = os.environ['POC_TELEPRECO_RABBITMQ_HA_SERVICE_HOST']
@@ -35,6 +37,7 @@ try:
     postgres_host = os.environ['POC_TELEPRECO_POSTGRESQL_SERVICE_HOST']
     postgres_username = 'postgres'
     postgres_psw = 'postgres'
+
     db_1_name = 'atendimento'
     db_2_name = 'orcamento'
 
