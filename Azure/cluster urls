@@ -5,4 +5,4 @@
 [jaeger]        /tracing
 [swagger]       /bff/swagger
 [grafana]       /grafana
-[prometheus]    /prometheus
+[keycloak]      /auth
