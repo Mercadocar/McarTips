@@ -1,11 +1,11 @@
-[Rod Cluster]
+[DeS_v6]
     [Scaling]
     az vmss scale --name aks-agentpool-26368206-vmss --new-capacity 0 --resource-group MC_RodolphoResource_des-v6_eastus
     [List VMs]
     az vmss list-instances --name aks-agentpool-26368206-vmss --resource-group MC_RodolphoResource_des-v6_eastus
 
-[Bruno Cluster]
+[DeS_v7]
     [Scaling]
-    az vmss scale --name aks-agentpool-11272080-vmss --new-capacity 0 --resource-group MC_Bruno_ResourceGroup_brunoaks_westus2
+    az vmss scale --name aks-agentpool-29234234-vmss --new-capacity 0 --resource-group MC_RodolphoResource_des-v7_eastus
     [List VMs]
-    az vmss list-instances --name aks-agentpool-11272080-vmss --resource-group MC_Bruno_ResourceGroup_brunoaks_westus2
+    az vmss list-instances --name aks-agentpool-29234234-vmss --resource-group MC_RodolphoResource_des-v7_eastus
