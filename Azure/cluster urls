@@ -6,3 +6,4 @@
 [swagger]       /bff/swagger
 [grafana]       /grafana
 [keycloak]      /auth
+[pgadmin4]      /pgadmin4
