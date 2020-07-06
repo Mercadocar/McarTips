@@ -1,0 +1,56 @@
+.Net Core API Client Best Practices
+
+>> Ferramentas de geração de models via OpenApi Specs
+- Swagger Code Gen
+https://swagger.io/tools/swagger-codegen/ (precisa de JVM para rodar)
+
+- Swagger Code Gen Online
+http://editor.swagger.io/
+
+- NSwagStudio
+https://github.com/RicoSuter/NSwag/wiki/NSwagStudio (somente Windows)
+
+- Add REST API Client feature inside Visual Studio
+somente full framework
+
+- AutoRest
+https://github.com/Azure/autorest (command tool, put some private dependencies on code to work)
+
+>> Usar instância única do HttpClient
+Embora seja disposable, não criá-lo por request pois além de degradar a performance, uma carga de requisições pode causar erro de indisponibilidade de sockets, uma vez que cada HttpClient abre uma conexão através de um socket e seu dispose encerra a conexão, mas a liberação do socket pelo SO tem um certo delay, então, por um determinado intervalo de tempo não seria possível efetuar novas conexões por não haver sockets livres, causando erro. Recomenda-se então usá-lo no construtor da classe, com parâmetros default (base URL, accepted-headers, etc) e passá-lo como parâmetro ao HttpRequestMessage (que pode ter configurações específicas por request). Recomenda-se inclusive que o HttpClient seja estático.
+
+Porém, essa abordagem tem a desvantagem de não haver a renovação de DNS, o que pode causar comportamentos inesperados, especialmente em ambientes na nuvem. A solução definitiva é usar HttpClientFactory (Microsoft.Extensions.Http). Sua forma de uso é configurá-lo via metodo de extensão AddHttpClient do serviceCollection e injetar via parâmetro do construtor, ficando então no método do request criar uma instância do HttpClient a partir do httpClientFactory.CreateClient(). 
+
+>> Response
+Quando não houver controle da API a ser chamada (time diferente ou empresa terceira), recomenda-se identificar o accepted-header (XML, JSON, etc) da resposta e converter de acordo (podendo dizer qual o formato de preferência no request usando o parâmetro quality como 1, 0.9 para a segunda opção e assim sucessivamente).
+
+> Media Type Jason+Patch+Json
+serve para manipular parcialmente valores de um objeto Json, suportado pelo verbo Http. No client existe a implementação dessas operações nos elementos nativamente no AspNetCore 3.0 (insert, replace, move, remove, etc), através do objeto JsonPatchDocument<T>.
+
+> Melhorando performance com Streams
+Ao invés de usar response.Content.ReadAsStringAsync (que converte o stream de resposta em string e depois deverá ser deserializado de Json para Model) é possível usar response.Content.ReadAsStreamAsync, que pode ser lido via StreamReader e deserializado (economizando o cast de stream para string). É importante lembrar que essa técnica demanda o dispose do stream da resposta, do StreamReader e do deserializador (utilize o using).
+
+Também é possível otimizar o uso da memória com o stream através do HttpCompletionMode, que possibilita receber o stream parcialmente e de tempos em tempos (e não apenas como uma resposta final da requisição).
+
+Podemos usar Streams também no Post/Put/Patch, sendo necessário criar um MemoryStream, um StreamWriter, um JsonTextWritter e finalmente serializar com JsonSerializer. Isso geralmente vale a pena apenas quando o conteúdo a ser enviado ao servidor é grande, caso contrário, a alocação desses objetos forçará o uso contínuo do GC e haverá perda de performance. Portanto, é recomendado testar seus cenários para encontrar a abordagem que mais vale a pena.
+
+GZip ou deflate são compactadores que podem ser implementado no servidor e permitem o uso pelos clientes no envio de dados, diminuindo o uso de recursos e aumentando a performance. Isso é feito via request.Headers.AcceptEncoding. Porém, quando o request é compactado o response provavelmente também
+o será, então, é preciso configurar no HttpClient a propriedade AutomaticDecompression do HttpClientHandler setado nele.
+
+> Use StatusCode para tratar corretamente a resposta da requisição
+Normalmente tratar respostas diferentes da categoria 200 como exceptions (response.EnsureSuccessStatusCode) não é suficiente. Então, utilize !response.IsSuccessStatusCode combinado com switch de response.StatusCode (caso a API trate-os corretamente), sendo possível inclusive  utilizar o HttpStatusCode.UnprocessableEntity (422) para verificar erros de validação no model fornecido no request (a mensagem vem no response.Content, que precisa ser deserializada).
+
+> Pipeline de uma requisição
+Uma requisição HttpClient contém um HttpRequestMessage, que contém um HttpMessageHandler que se comunica com uma API via HttpClientHandler e retorna um HttpResponseMessage. Porém, um HttpMessageHandler pode encadear sua execução com outro HttpMessageHandler, tornando possível criar um pipeline de execução da request antes de receber seu retorno final no HttpClient. Isso é usado para criar comportamentos padronizados de requisição como retry policy, time out policy, authourization flow, client caching, etc.
+
+Isso pode ser feito criando uma classe herdando de DelegatingHandler (que herda de HttpMessageHandler) e injetando-a no pipeline do .net core (serviceCollection.AddHttpMessageHandler())
+
+Um bom exemplo de uso de HttpMessageHandler foi uma implementação de HSTS (Http Strict Transport Security) para proteger sites de ataques de downgrade de protocolo e sequestro de cookies (
+https://github.com/maartenba/DotNetContrib.Net.Http.Hsts). Outra bom exemplo é o Polly, uma biblioteca contendo diversos recursos para tornar a comunicação cliente/servidor mais resiliente, através de políticas expressas em linguagem fluente (curso disponível: https://app.pluralsight.com/library/courses/polly-fault-tolerant-web-service-requests/table-of-contents).
+
+Outra utilização bem comum de HttpMessageHandler é em testes unitários, forçanco uma resposta para aquele request apenas injetando um HttpMessageHandler "mockado".
+
+> Referência
+https://app.pluralsight.com/library/courses/httpclient-consume-apis-dotnet-core/table-of-contents
+
+
