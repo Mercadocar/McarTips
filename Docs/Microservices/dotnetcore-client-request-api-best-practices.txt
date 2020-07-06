@@ -1,6 +1,8 @@
-.Net Core API Client Best Practices
+Melhores Práticas para Consumo de APIs em .Net Core
 
->> Ferramentas de geração de models via OpenApi Specs
+>> Utilizar ferramentas de geração de models via OpenApi Specs
+Ao invés de criar manualmente classes de model em C# para utilizar nas requisições de APIs, é possível utilizar geradores de código a partir da especificação OpenAPI (fornecida pelo Swagger, por exemplo), caso a mesma foi implementada na API. Algumas ferramentas são: 
+
 - Swagger Code Gen
 https://swagger.io/tools/swagger-codegen/ (precisa de JVM para rodar)
 
@@ -11,7 +13,7 @@ http://editor.swagger.io/
 https://github.com/RicoSuter/NSwag/wiki/NSwagStudio (somente Windows)
 
 - Add REST API Client feature inside Visual Studio
-somente full framework
+somente .net full framework
 
 - AutoRest
 https://github.com/Azure/autorest (command tool, put some private dependencies on code to work)
