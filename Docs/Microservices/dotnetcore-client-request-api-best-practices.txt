@@ -52,7 +52,16 @@ https://github.com/maartenba/DotNetContrib.Net.Http.Hsts). Outra bom exemplo é 
 
 Outra utilização bem comum de HttpMessageHandler é em testes unitários, forçanco uma resposta para aquele request apenas injetando um HttpMessageHandler "mockado".
 
+> Serialização / Deserialização
+Ao utilizar a partir da versão .net core 3, utilizar a funcionalidade nativa implementada no System.Text.Json e System.Text.Json.Serialization (pois tem melhor performance que o bem conhecido Newtonsoft.Json).
+
+Também vale a pena utilizar os métodos de extensão do package System.Net.Http.Json para simplificar chamadas HttpClient e HttpContent que fazem uso de Json, como:
+httpClient.GetFromJsonAsync<T>
+httpClient.PostAsJsonAsync<T>
+httpClient.PutAsJsonAsync<T>
+httpContent.ReadFromJsonAsync<T>
+
 > Referência
 https://app.pluralsight.com/library/courses/httpclient-consume-apis-dotnet-core/table-of-contents
-
+https://github.com/dotnet/designs/blob/master/accepted/2020/json-http-extensions/json-http-extentions.md
 
