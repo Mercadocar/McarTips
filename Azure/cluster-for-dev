@@ -38,7 +38,7 @@ STEP 7
 Tips:
     1. Brand new clusters arent't registered on Image Registries. So some
     of the images wont pull. Ask for permission on the Registry.
-    2. Your local kubectl cli isn't configured for the new cluster, so:
+    2. Your local kubectl cli isn't configured for the new cluster, so inside a console/terminal:
         az aks list -o table (to get cluster and resource name)
         az aks get-credentials --resource-group RESOURCE_NAME --name CLUSTER_NAME
         
@@ -51,7 +51,7 @@ STEP 9
         helm dependency update
 
 STEP 10
-    Deploy chart configuration to the cluster,
+    Deploy chart configuration to the cluster (navegate to a chart directory first),
     on a new one:
         helm install poc-telepreco .
     or updating an existing one:
