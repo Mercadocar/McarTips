@@ -39,6 +39,7 @@ Tips:
     1. Brand new clusters arent't registered on Image Registries. So some
     of the images wont pull. Ask for permission on the Registry.
     2. Your local kubectl cli isn't configured for the new cluster, so:
+        az aks list -o table (to get cluster and resource name)
         az aks get-credentials --resource-group RESOURCE_NAME --name CLUSTER_NAME
         
 STEP 8
