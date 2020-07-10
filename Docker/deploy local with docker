@@ -4,34 +4,34 @@ FRONT
     docker build --rm  -t mcarimageregistry.azurecr.io/baby-frontvue:latest .
     docker push mcarimageregistry.azurecr.io/baby-frontvue:latest
 BFF
-    docker build --rm -f "MCar.Baby.Bff.Telepreco.API/dockerfile" -t mcarimageregistry.azurecr.io/baby-bff-telepreco:latest .
+    docker build --rm -f "MCar.Baby.Bff.Telepreco.API/Dockerfile" -t mcarimageregistry.azurecr.io/baby-bff-telepreco:latest .
     docker push mcarimageregistry.azurecr.io/baby-bff-telepreco:latest
 BFF Asterisk
-    docker build --rm -f "MCar.Baby.Bff.Telepreco.Asterisk.Web/dockerfile"  -t mcarimageregistry.azurecr.io/baby-bff-telepreco-asterisk:latest .
+    docker build --rm -f "MCar.Baby.Bff.Telepreco.Asterisk.Web/Dockerfile"  -t mcarimageregistry.azurecr.io/baby-bff-telepreco-asterisk:latest .
     docker push mcarimageregistry.azurecr.io/baby-bff-telepreco-asterisk:latest
 Sac
-    docker build --rm -f "MCar.Baby.Microservice.Sac.API/dockerfile"  -t mcarimageregistry.azurecr.io/baby-microservice-sac:latest .
+    docker build --rm -f "MCar.Baby.Microservice.Sac.API/Dockerfile"  -t mcarimageregistry.azurecr.io/baby-microservice-sac:latest .
     docker push mcarimageregistry.azurecr.io/baby-microservice-sac:latest
 Cliente
-    docker build --rm -f "MCar.Baby.Microservice.Cliente.API/dockerfile"  -t mcarimageregistry.azurecr.io/baby-microservice-cliente:latest .
+    docker build --rm -f "MCar.Baby.Microservice.Cliente.API/Dockerfile"  -t mcarimageregistry.azurecr.io/baby-microservice-cliente:latest .
     docker push mcarimageregistry.azurecr.io/baby-microservice-cliente:latest
 Estoque
-    docker build --rm -f "MCar.Baby.Microservice.Estoque.API/dockerfile"  -t mcarimageregistry.azurecr.io/baby-microservice-estoque:latest .
+    docker build --rm -f "MCar.Baby.Microservice.Estoque.API/Dockerfile"  -t mcarimageregistry.azurecr.io/baby-microservice-estoque:latest .
     docker push mcarimageregistry.azurecr.io/baby-microservice-estoque:latest
 Produto
-    docker build --rm -f "Mcar.Baby.Microservice.Produto.API/dockerfile"  -t mcarimageregistry.azurecr.io/baby-microservice-produto:latest .
+    docker build --rm -f "Mcar.Baby.Microservice.Produto.API/Dockerfile"  -t mcarimageregistry.azurecr.io/baby-microservice-produto:latest .
     docker push mcarimageregistry.azurecr.io/baby-microservice-produto:latest
 Asterisk
-    docker build --rm -f "MCar.Baby.Asterisk.Client/dockerfile"  -t mcarimageregistry.azurecr.io/baby-microservice-asterisk:latest .
+    docker build --rm -f "MCar.Baby.Asterisk.Client/Dockerfile"  -t mcarimageregistry.azurecr.io/baby-microservice-asterisk:latest .
     docker push mcarimageregistry.azurecr.io/baby-microservice-asterisk:latest
 Pessoa
-    docker build --rm -f "MCar.Microservice.Pessoa.API/dockerfile"  -t mcarimageregistry.azurecr.io/microservice-pessoa:latest .
+    docker build --rm -f "MCar.Microservice.Pessoa.API/Dockerfile"  -t mcarimageregistry.azurecr.io/microservice-pessoa:latest .
     docker push mcarimageregistry.azurecr.io/microservice-pessoa:latest
 Attendance
-    docker build --rm -f "MercadoCar.MicroService.RestAPI/dockerfile"  -t mcarimageregistry.azurecr.io/microservice-atendimento:latest .
+    docker build --rm -f "MercadoCar.MicroService.RestAPI/Dockerfile"  -t mcarimageregistry.azurecr.io/microservice-atendimento:latest .
     docker push mcarimageregistry.azurecr.io/microservice-atendimento:latest
 Orcamento
-    docker build --rm -f "MCar.API/dockerfile"  -t mcarimageregistry.azurecr.io/microservice-orcamento:latest .
+    docker build --rm -f "MCar.API/Dockerfile"  -t mcarimageregistry.azurecr.io/microservice-orcamento:latest .
     docker push mcarimageregistry.azurecr.io/microservice-orcamento:latest
 
 Other annotations:
