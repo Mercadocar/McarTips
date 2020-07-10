@@ -7,3 +7,4 @@
 [grafana]       /grafana
 [keycloak]      /auth
 [pgadmin4]      /pgadmin4
+[locust]        /loadtest
