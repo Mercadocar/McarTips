@@ -1,0 +1,88 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+# Set variables once
+variables:
+  HELM_EXPERIMENTAL_OCI: 1
+  azureContainerRegistryName: golive
+
+steps:
+- script: |
+    #set helm version
+    helmVersion=helm-v3.0.0-rc.3-linux-amd64.tar.gz
+    
+    #download helm version
+    wget https://get.helm.sh/$helmVersion
+    tar xvzf $helmVersion
+    sudo mv linux-amd64/helm /usr/bin/helm
+    ls /usr/bin/helm
+  displayName: 'installing helm 3'
+
+- task: HelmDeploy@0
+  displayName: 'helm list'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscription: 'Microsoft Azure (c27897b1-20e5-452a-a8fa-52a2731ff540)'
+    azureResourceGroup: 'brunoResourceGroup'
+    kubernetesCluster: 'brunoAKSCluster'
+    command: 'ls'
+
+- task: HelmDeploy@0
+  displayName: 'helm package'
+  inputs:
+    command: 'package'
+    chartPath: 'charts/atendimento'
+    save: false
+
+- script: |
+    echo printenv
+    printenv
+  displayName: 'env'
+
+- task: AzureCLI@2
+  displayName: 'helm chart save'
+  inputs:
+    azureSubscription: 'Microsoft Azure (c27897b1-20e5-452a-a8fa-52a2731ff540)'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      helm chart save $(System.ArtifactsDirectory)/poc-telepreco-atendimento-0.1.3.tgz $(azureContainerRegistryName)/helm/poc-telepreco-atendimento-0.1.3.tgz;
+
+- task: HelmDeploy@0
+  displayName: 'helm login'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscription: 'Microsoft Azure (c27897b1-20e5-452a-a8fa-52a2731ff540)'
+    azureResourceGroup: 'brunoResourceGroup'
+    kubernetesCluster: 'brunoAKSCluster'
+    command: 'login'
+
+- script: |
+    export HELM_EXPERIMENTAL_OCI=1
+  displayName: 'export oci=1'
+
+- task: AzureCLI@2
+  displayName: 'az acr login'
+  inputs:
+    azureSubscription: 'Microsoft Azure (c27897b1-20e5-452a-a8fa-52a2731ff540)'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      helm registry login golive.azurecr.io -u golive -p N4QVbXO0+MdRTAPsXuCBebC98l56wRvS ;
+
+- task: AzureCLI@2
+  displayName: 'az acr helm push'
+  inputs:
+    azureSubscription: 'Microsoft Azure (c27897b1-20e5-452a-a8fa-52a2731ff540)'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      az acr helm push $(System.ArtifactsDirectory)/poc-telepreco-atendimento-0.1.3.tgz --name $(azureContainerRegistryName) --force;
