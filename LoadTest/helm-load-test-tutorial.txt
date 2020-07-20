@@ -1,0 +1,72 @@
+Tutorial teste de carga
+
+>> Requisitos
+- ter um cluster k8s para testar, seja AKS ou minikube
+https://github.com/Mercadocar/McarTips/blob/master/Azure/cluster-for-dev
+
+- caso já tenha sido obtido credencial de mais de um cluster AKS, liste-os e configure um deles para utilizar
+kubectl config get-contexts
+kubectl config use-context <yourClusterName>
+
+- configurar o cluster com a qtde necessária de nodes para suportar os serviços necessários para o teste
+https://github.com/Mercadocar/McarTips/blob/master/Azure/azure%20commands
+
+- baixar na maquina o projeto do helm via git
+git clone https://github.com/Mercadocar/helm-telepreco-v2.git
+
+>> Configuração dos serviços
+Abra o projeto (recomenda-se o VS Code) e ative os serviços necessários para efetuar o teste, desativando o que não é necessário. Isso é feito editando o arquivo "values.yaml" na raiz do projeto, na parte do documento identificada como toggle features, mudando para cada um dos serviços (como "sac", "produto", "rabbitmq", "jaeger", "postgres", etc) a tag "enabled" para "true" ou "false". Lembre-se que quanto mais serviços forem ativados mais recursos de hardware serão necessários para funcionar, onde atualmente ativar todos os recursos demanda pelo menos 3 nodes.
+
+Como a proposta é realizar um teste de carga, deixe ativado o "locust", a ferramenta que fará o teste de carga baseado em um script python. Também é necessário configurar a qtde de réplicas do locust, dentro da pasta "tool-locust", arquivo "values.yaml", tag "replicaCount", sendo que quanto mais usuários simultâneos serão usados para fazer requisições, mais réplicas serão necessárias. Como comparativo, o locust com 2 réplicas aguentaram o teste do "bff-main" com 50 usuários, sendo que acima disso o tempo de resposta das requisições degradou muito ao tentar utilizar mais usuários, pois os serviços workers perdiam performance por falta de recurso, invalidando o resultado dos testes (não esqueça de ver nos nodes se há recursos disponíveis, via comando "kubectl top node").
+
+Agora é necessário configurar a operação que se deseja testar. Edite o arquivo "tasks.py" dentro da pasta "charts", "tool-locust", "tasks", bastando manter a "@task class..." juntamente com a "@seq_task() def..." descomentada (há vários exemplos comentados que podem ser usados como modelo). A idéia é que essa operação seja chamada por múltiplos usuários simultaneamente (a ser definido na página do Locust), com um intervalo de chamadas entre 100 e 200 milissegundos.
+
+>> Deploy das configurações
+- Navegue para a pasta do projeto helm e digite:
+helm install <NOME-CHART> .
+
+- Caso ocorra erro de falta de dependência dos pacotes helm, será necessário executar antes o comando:
+helm dependency update
+
+- Caso já tenha sido feito deploy daquele projeto helm, será necessário atualizá-lo ao invés de instalá-lo:
+helm upgrade <NOME-CHART> .
+
+- Na maioria dos casos será suficiente efetuar esse "upgrade" do helm. Para os casos que não, a desinstalação do helm é feita via comando:
+helm uninstall <NOME-CHART>
+
+>> Execução do teste
+- Primeiro precisamos obter o IP externo do cluster, via comando:
+kubectl get svc
+
+- Obtenha o IP da coluna "External-IP" do serviço cujo nome termina em "ingress-controller" (na verdade nenhum serviço terá valor nessa coluna, exceto esse mencionado)
+
+- Configure esse IP na URL base do locust, dentro da pasta "tool-locust", "values.yaml", tag "master", "config", "target-host"
+
+- Atualize o helm no cluster
+helm upgrade <NOME-CHART> .
+
+- Utilize o mesmo IP obtido anteriormente para acessar a URL em um navegador:
+http://<External-IP>/loadtest
+ 
+- Preencha a quantidade de usuários simultâneos (primeiro campo) e a qtde de usuários por segundo que serão adicionados (segundo campo). 
+Ex: utilizando 30 e 2, no primeiro segundo serão realizadas 2 requisições simultâneas, depois 4, 6 e etc...até chegar a 30 usuários simultâneos. Esse incremento seria para medir a qtde de recursos alocados por incremendo de usuários simultâneos.
+
+- Acompanhe o uso de recursos nos serviços em teste
+kubectl top pod
+
+- Compare se os serviços em teste atingiram o limite de recursos pré-configurados, que podem ser vistos dentro da pasta dos serviços (ex: ms-orcamento), arquivo "values.yaml", tag "resources" > "limits"
+
+- Também deve ser levado em consideração se aquele serviço está configurado para utilizar "hpa" (horizontal pod autoscaling), o que significa que em um cenário de alta demanda serão criadas novas instâncias daquele serviço (pod), que dividirão a carga de trabalho automaticamente (quem realiza esse trabalho de balanceamento de carga é o objeto Kubernetes "service" daquele serviço). Para configurar "hpa", basta criar dentro da pasta do serviço > templates, o arquivo "Hpa.yaml" (vide exemplo no ms-atendimento). Lembre-se de usar "hpa" apenas para pods que não estejam como "best-effort", isto é, que não tem limite de uso de recursos configurado, então sua instância poderá crescer tanto quanto possível, não precisando criar novos pods para atender o crescimento das requisições.
+
+- Investigue os tempos das requisições via trace (necessário ter ativado os serviços do ElasticSearch e jaeger), através da URL em um navegador:
+http://<External-IP>/tracing
+
+- Na ocorrência de erros é possível investigar os logs dos pods:
+kubectl get pod (obtenha o nome do pod)
+kubectl logs <NOME-DO-POD>
+
+- Também é possível utilizar o wavescope (caso tenha sido ativado anteriormente) para procurar por problemas, como uso de recursos nos pods, visualizar logs, etc:
+http://<External-IP>/map (filtre por "pod" e nome do serviço, e ao clicar no objeto haverá algumas opções disponíveis na janela que abrirá)
+
+- Ao término dos testes, libere os nodes do cluster para que não haja cobrança de recursos na Azure (mude capacity para 0)
+https://github.com/Mercadocar/McarTips/blob/master/Azure/azure%20commands
