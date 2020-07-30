@@ -1,0 +1,69 @@
+>> Principais Estratégias de Deploy
+- Recreate
+Consiste em excluir o ambiente atual e criar um novo. Isso causa a interrupção dos serviços até que eles estejam operacionais novamente, porém, não demanda recursos de hardware adicionais.
+- Ramped / Incremental
+Consiste em recriar aos poucos as réplicas dos serviços para a versão nova, não havendo interrupção dos serviços. Possui pequena demanda de recursos de hardware adicionais (nova instância), porém, a principal desvantagem é a falta de controle de tráfego e demora no rollout/rollback.
+- Blue/Green
+Consiste na criação completa do novo ambiente antes de trocar o direcionamento das requisições, não havendo então interrupção dos serviços, além de permitir um rollout/rollback instantâneo. Porém, durante o deploy é demandado o dobro de hardware normalmente usado.
+- Canary
+Consiste na criação de uma pequena parte dos serviços atuais com a versão nova e direcionar um pequeno percentual do tráfego para ela, permitindo um período de monitoramento até que se decida efetuar o restante do rollout, e possibilitando um rápido rollback se necessário. Porém, o rollout é demorado e é preciso uma ferramenta adicional (ex: Istio) para controlar com mais precisão o roteamento de tráfego.
+- AB Testing
+Similar ao Canary, porém, seu direcionador de tráfico baseia-se em informações da requisição (ex: header do Http), permitindo trabalhar com múltiplas versões por dispositivo (como navegador, apps mobile, etc). É essencial uma ferramenta para controle de tráfego de requisições (ex: Istio) e ferramentas de tracing distribuídas para identificar problemas por versão.
+
+>> Escolha
+Até que seja necessário uma estratégia mais elaborada, o deploy Ramped/Incremental será recomendado para a Mercadocar, pois além de não demandar hardware adicional significativo também oferece zero downtime dos serviços e simplicidade de execução.
+
+>> Passo a passo do deploy Ramped
+Como foram criados templates para os charts dos microsserviços, para utilizar a estratégia de deploy "Ramped" é necessário colocar em seu arquivo "Values.yaml":
+
+deployModeRamped:
+    maxSurge: 1
+    maxUnavailable: 1 
+livenessProbe:
+  periodSeconds: 15
+  initialDelaySeconds: 15
+  httpGet:
+    path: /v1/Orcamento/health
+    port: 80
+readinessProbe:
+  periodSeconds: 15
+  initialDelaySeconds: 15
+  httpGet:
+    path: /v1/Orcamento/health
+    port: 80
+minReadySeconds: 15
+
+"deployModeRamped" indica que a estratégia de deploy será a "Ramped". Caso não seja especificado, será usado por padrão a estratégia "Recreate" e nenhum dos demais parâmetros serão necessários.
+"maxSurge" indica a quantidade de réplicas que serão criadas com a versão nova, onde por um curto período vai ultrapassar o replicaCount daquele Deployment.
+"maxUnavailable" indica a quantidade de réplicas que podem ficar indisponíveis (desligadas) durante o rollout, evitando a falta de recursos no node.
+"livenessProbe": configuração de "Healthcheck" (verificação de saúde do container), onde indica se o pod está vivo/funcionando.
+"readinessProbe": configuração de "Healthcheck" (verificação de saúde do container), onde indica se o pod está acessível.
+"periodSeconds": é o intervalo de tempo em segundos entre cada verificação de saúde, que será feito ciclicamente.
+"initialDelaySeconds": é o intervalo de tempo que o Kubernetes vai aguardar para começar a verificação de saúde.
+"minReadySeconds": determina em segundos quanto tempo um pod recém-criado precisa ter para ser considerado disponível para uso. 
+
+Depois basta executar a atualização do helm do projeto: helm upgrade <NOME-CHART-PROJETO> .
+
+Caso queira acompanhar o processo de rollout (a criação de pods com a versão nova e a destruição de pods da versão antiga), há 2 opções:
+
+kubectl get pod -w (permite acompanhar as mudanças de status dos pods)
+
+kubectl get rs -w (permite acompanhar as mudanças de status dos replica sets, que controlam os pods)
+
+>> Rollback
+Caso seja necessário voltar para a versão anterior, é possível verificar o histórico de deployment e encontrar a versão anterior (chamada de revision)
+
+kubectl rollout history deployment (exibe todos os deployments e suas versões) 
+
+kubectl rollout undo <NOME-DEPLOYMENT> --to-revision=<NUMERO-REVISION>
+ex: kubectl rollout undo deployment.extensions/deploy-poc-telepreco-orcamento --to-revision=2
+
+A forma de acompanhamento do rollback é a mesma do rollout.
+
+>> Referencias
+https://azure.microsoft.com/en-us/overview/kubernetes-deployment-strategy/
+https://www.slideshare.net/EtienneTremel/kubernetes-deployment-strategies-cncf-webinar
+https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+https://stackoverflow.com/questions/53239081/how-does-minreadyseconds-affect-readiness-probe
+https://unofficial-kubernetes.readthedocs.io/en/latest/tasks/configure-pod-container/configure-liveness-readiness-probes/?q=minReadySeconds&check_keywords=yes&area=default
