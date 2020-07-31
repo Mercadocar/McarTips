@@ -1,4 +1,4 @@
-Notas do curso de introdução a Kubernetes do pluralsight
+Notas do curso de introdução a Kubernetes do Pluralsight
 
 Kubernetes (abreviado como K8s) é um basicamente um orquestrador de microserviços rodando em containers. Ele funciona apenas no Linux e é composto por:
 - Pods - Pod é um ambiente para execução de um ou mais containers (que são serviços).
@@ -29,18 +29,24 @@ Um Pod compartilha seu ambiente (rede, memória, namespace, volumes) com quantos
 
 Pods não tem um ciclo de vida duradouro (que estão funcionando e quando param precisam ser reparados). Eles são criados, funcionam enquanto for possível, e quando param são destruídos e novos são criados no lugar. Portanto, não espere que o estado de seu serviço seja recuperável (armazene estado em serviços específicos para isso). Os Pods possuem os seguintes status: Pending (quando um apiserver dispara a criação de um Pod e sua imagem está sendo baixada e iniciada), Running (está rodando, disponível para utilização), Succeeded (foi desligada) e Failed (durante o status Pending ocorreu uma falha que impossibilitou de iniciar).
 
-Clientes não podem referenciar IPs dos Pods (já que eles mudam), mas sim de IP expostos via Service, um objeto do K8s com IP e DNS fixos que conhece os Pods e roteiam as requisições dos clientes para os Pods. Na verdade, quando é criado um Service, é criado junto um Endpoint para o ele e outro Endpoint para cada Pod configurado para aquele Service, ficando então os Pods com a mesma porta que seu Service associado.
+Clientes não podem referenciar IPs dos Pods (já que eles mudam), mas sim de IP expostos via Service, um objeto do K8s com IP e DNS fixos que conhece os Pods e roteiam as requisições dos clientes para os Pods. Na verdade, quando é criado um Service, é criado junto um Endpoint para ele e outro Endpoint para cada Pod configurado para aquele Service, ficando então os Pods com a mesma porta que seu Service associado.
 
 Um Service possui o campo "spec: type: " contendo 3 tipos:
 - ClusterIP - sua aplicação somente é acessível dentro do cluster do K8s, isto é, somente será acessada por outra aplicação hospedada naquele K8s. Isso pode ser usado para inibir o acesso externo à um microserviço, onde quem tem de acessá-lo é uma aplicação BFF, que será hospedada no mesmo cluster do K8s (esse sim precisa ter acesso externo e não usará essa opção "ClusterIP".
-- NodePort - publica uma porta fixa, permitindo acessibilidade externa via IP do cluster do K8s + essa porta, podendo ser obtida pelo comando "minikube service <NOME> --url" caso seja um cluster do minikube.
+- NodePort - publica uma porta fixa, permitindo acessibilidade externa via IP do cluster do K8s + essa porta, podendo ser obtida pelo comando "minikube service <NOME> --url" caso seja um cluster do minikube(*1).
 - LoadBalancer - permite acessibilidade externa via recurso do provedor de cloud (AWS, Azure, etc), onde haverá um IP público para acessar a aplicação. Ao inspecionar o serviço, esse IP aparece como External-IP
+
+(*1) Minikube é um cluster k8s simplificado, feito para testes e aprendizado, sendo comum sua utilização na máquina do desenvolvedor para testar sua aplicação no ambiente do K8s.
 
 Quando for utilizado um provedor cloud e utilizado a opção LoadBalancer, para acessar a aplicação utilize: http://External-IP/App-name onde External-IP é obtido pelo comando "kubectl get svc --namespace nome-namespace" e App-name em uma aplicação ASP.NET CORE "containerizada" é o final da "launchUrl" no arquivo launchSettings.json do perfil Docker (a parte do ServiceHost e ServicePort não é usada pois é determinada pelo K8s).
 
-Service Discovery é essa mecânica em que os Services "descobrem" Pods, funcionando através de Labels, onde o Service possui alguns, os Pods também. Quando novos Pods são criados e seus Labels são iguais a de um o Service, aquele Service passa a considerar que aqueles Pods estão sob seu domínio, criando um endpoint para ele (por padrão via DNS, mas existe também via variáveis de ambiente) e passando a encaminhar requisições.
+Quando houver um serviço hospedado no cluster que precise ser acessado externamente de forma temporária (como um BD, por exemplo), é possível criar um redirecionamento através de portas, onde é configurado uma porta na máquina local que conecta em uma porta do serviço rodando no cluster K8s (conhecido como port forwarding).  
 
-O processo de deploy também utiliza os Labels. No cenário onde um Service e Pods possuem os Labels "Produção", "Serviço 1" e "Versão 1.3", quando se inicia o deploy, o Label "Versão 1.3" é removido do Service, continuando a rotear para os Pods existentes. Novos Pods são criados com o Label "Versão 1.4" e passam a ser utilizados pelo Service. Finalmente, basta adicionar novo Label "Versão 1.4" ao Service para ele parar de encaminhar requisições aos Pods com a versão anterior.
+Outro recurso importante oferecido pelo k8s é o ingress, que recebe requisições Http/Https e as encaminha para um Service específico. É através dele que múltiplos serviços do cluster são expostos através de múltiplas terminações de URLs: http://IP-Cluster/alias-servico1 encaminha para servico1 na porta 80 e http://IP-Cluster/alias-servico2 encaminha para servico2 na porta 5000. Ele também oferece recursos de segurança de acesso via protocolo TLS.
+
+Service Discovery é essa mecânica em que os Services "descobrem" Pods, funcionando através de Labels, onde o Service possui alguns, os Pods também. Quando novos Pods são criados e seus Labels são iguais a de um Service, aquele Service passa a considerar que aqueles Pods estão sob seu domínio, criando um endpoint para ele (por padrão via DNS, mas existe também via variáveis de ambiente) e passando a encaminhar requisições.
+
+O processo de deploy baseia-se nesses Labels. No cenário onde um Service e Pods possuem os Labels "Produção", "Serviço 1" e "Versão 1.3", quando se inicia o deploy, o Label "Versão 1.3" é removido do Service, continuando a rotear para os Pods existentes. Novos Pods são criados com o Label "Versão 1.4" e passam a ser utilizados pelo Service. Finalmente, basta adicionar novo Label "Versão 1.4" ao Service para ele parar de encaminhar requisições aos Pods com a versão anterior.
 
 Também é importante mencionar que são os Services que fazem o balanceamento de carga. 
 
@@ -49,13 +55,15 @@ O gerenciamento do ambiente K8s é muito facilitado pelo recurso do Deployment, 
 - monitoramento de ambiente e resposta automática para falhas.
 - versionar facilmente os serviços.
 - refazer facilmente deploys em outros ambientes.
-- atualizações contínuas com zero indisponibilidade de maneira simples, permitindo adoção de estratégias de deploy Blue/Green ou Canary.
+- atualizações contínuas com zero indisponibilidade de maneira simples, permitindo adoção de estratégias de deploy Blue/Green, Canary e etc.
 - facilidade para rollback de versões.
 
 Estratégias de deploy:
 - Blue/Green - consiste em duplicar sua aplicação, onde a nova cópia possui a nova versão, e seu proxy reverso passa a encaminhar as novas requisições para ela apenas quando a nova versão estiver pronta (as requisições em andamento na versão antiga podem terminar naturalmente). Essa estratégia permite um deploy com zero indisponibilidade, porém, vc precisa do dobro de recursos de hardware que usa atualmente (pelo menos durante o deploy).
-- Canary - apenas um percentual das requisições são encaminhadas para a nova versão, e esse percentual é incrementado com o tempo (e a ausência de falhas detectadas). Em ambientes com balanceamento de carga, apenas uma nova instância é criada com a versão nova para receber as requisições inicialmente, substituindo aos poucos as instãncias das versões antigas pelas novas. Quando não há balanceamento de carga, haveria a mesma necessidade de recursos de hardware (duplicação) que a estratégia Blue/Green.
+- Canary - apenas um percentual das requisições são encaminhadas para a nova versão, e esse percentual é incrementado com o tempo (com a ausência de falhas detectadas). Em ambientes com balanceamento de carga, apenas uma nova instância é criada com a versão nova para receber as requisições inicialmente, substituindo aos poucos as instâncias das versões antigas pelas novas. Quando não há balanceamento de carga, haveria a mesma necessidade de recursos de hardware (duplicação) que a estratégia Blue/Green.
 - A/B Testing - consiste em monitorar dados referentes às funcionalidades de software que sofreram alteração entre a versão nova e a anterior, sendo usado em conjunto com as outras estratégias de deploy. Isso permite identificar precocemente impactos da versão nova, apressando a tomada de decisão de voltar a versão. Um exemplo seria a qtde de vendas cair em um intervalo de tempo apenas na versão nova, o que poderia indicar que o serviço é tão mais lento que impactou na operação.
+
+O armazenamento de estado no cluster utiliza um recurso chamado PV (Persistent Volume) e PVC (Persistent Volumes Claim). O PV determina um espaço de armazenamento não volátil disponível para utilização pelos serviços no cluster e o PVC determina a acessibilidade de um PV para determinados usuários (read, write, override). 
 
 > Instalação do Minikube no Windows (Mini-Kubernetes para ambiente de desenvolvimento)
 - Instalar kubectl e registrá-lo nas variáveis de ambiente do Windows.
@@ -205,14 +213,12 @@ minikube service <NOME> --url
 <service-name>.<namespace-name>.svc.cluster.local
 svc-poc-telepreco-bff
 
-11005
-
 >> Deployment
 kubectl create -f deploy.yml
 kubectl apply -f URL-deploy.yml --record
 kubectl rollout status deployment <NOME_DEPLOYMENT>
 kubectl get deploy <NOME_DEPLOYMENT>
-kubectl rollout history deployment <NOME_DEPLOYMENT>
+kubectl rollout history deployment <NOME_DEPLOYMENT> (ex: kubectl rollout history deployment.extensions/deploy-poc-telepreco-orcamento)
 kubectl get rs (replica sets history)
 kubectl rollout undo deployment <NOME_DEPLOYMENT> --to-revision=1
 
@@ -230,10 +236,13 @@ kubectl get secret --namespace default
 kubectl get all --namespace=kube-system -l name=tiller (obtém IP e porta exposto para o Cluster)
 kubectl get namespace
 kubectl logs deploy-poc-weather-799f67cbb7-458n9 --namespace gordon-namespace
+kubectl exec -it <POD_NAME> -- /bin/bash (abre console dentro do container)
+kubectl get hpa
 minikube start
 minikube addons enable ingress
 minikube get pods -n kube-system
 minikube ip
+sudo kubectl port-forward svc/poc-telepreco-postgresql 6000:5432
 
 >>>COMANDOS HELM<<<
 helm init
@@ -255,6 +264,7 @@ helm list
 
 > ver Chart.yaml já com variáveis substituídas por valores
 helm get hardy-moose (ver valores após instalação)
+helm get manifest <CHART> (ver o chart final usado para instalação no cluster)
 helm template <CHART> (para teste, onde ver valores sem instalar nada)
 helm template <CHART> -x templates/<ARQUIVO>.yaml
 helm install --dry-run --debug 
@@ -284,16 +294,13 @@ service/tiller-deploy   ClusterIP   10.108.79.45   <none>        44134/TCP
 github com lab do Helm: https://github.com/phcollignon/helm
 
 >>>Azure Kubernetes Service<<<
-az login (arquitetura@mercadocarmercantil.onmicrosoft.com e Dovu41293)
+az login (usuariomercadocar@mercadocarmercantil.onmicrosoft.com e senha pessoal)
 az aks list -o table
 az aks get-credentials -n <yourClusterName> -g <yourResourceGroupName>
+az aks install-cli (instala o kubectl através do client az)
 
 > CRIA GRUPO DE RECURSOS
 az group create --name myResourceGroup --location eastus
 
 > CRIA CLUSTER
 az aks create --resource-group myResourceGroup --name myAKSCluster --node-count 1 --enable-addons monitoring --generate-ssh-keys
-
-> CRIA RABBITMQ LOCAL NO DOCKER COM DASHBOARD
-docker run -d --name some-rabbit -p 5672:5672 -p 5673:5673 -p 15672:15672 rabbitmq:3-management  
-http://localhost:15672/
