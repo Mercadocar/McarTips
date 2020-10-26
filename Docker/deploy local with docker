@@ -40,8 +40,14 @@ PyRabbitJob
     docker build --rm -t mcarimageregistry.azurecr.io/cluster-initjob:latest .
     docker push mcarimageregistry.azurecr.io/cluster-initjob:latest
     docker run -p 80:80 rodoflho/mcarmicroserviceclusterinitjob:latest
+    docker run -p 80:80  mcarimageregistry.azurecr.io/front-cadastro:0.1
 
 Example to run docker locally:
  docker run -p 11003:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/mcarbabymicroserviceproduto:latest
 
+
+Integracao Cadastro
+    docker build --rm -t rodoflho/integration-cadastro:0.1 .
+    docker push rodoflho/integration-cadastro:0.1
+    docker run -p 5000:80 -d --restart=always -e "ASPNETCORE_ENVIRONMENT=Production" rodoflho/integration-cadastro:0.1
 
