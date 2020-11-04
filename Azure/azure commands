@@ -6,6 +6,6 @@
 
 [DeS_v7]
     [Scaling]
-    az vmss scale --name aks-agentpool-29234234-vmss --new-capacity 0 --resource-group MC_RodolphoResource_des-v7_eastus
+    az vmss scale --name aks-agentpool-29234234-vmss --new-capacity 1 --resource-group MC_des-v7_des-v7_eastus
     [List VMs]
     az vmss list-instances --name aks-agentpool-29234234-vmss --resource-group MC_RodolphoResource_des-v7_eastus
